@@ -1,0 +1,6 @@
+{
+  "name": "2026 정보보호 미션 챌린지",
+  "description": "오늘의 작은 실천이 우리의 정보를 지킵니다. 병원 교직원 정보보호 미션 수행 및 사진 인증 캠페인",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
