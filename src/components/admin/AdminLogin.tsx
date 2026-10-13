@@ -57,7 +57,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             <Lock className="w-7 h-7" />
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-[#172033]">
-            관리자 인증
+            관리자 로그인
           </h2>
           <p className="text-xs sm:text-sm text-[#64748B]">
             캠페인 관리를 위한 관리자 비밀번호를 입력해주세요.
@@ -99,10 +99,10 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({
             {isLoading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>확인 중...</span>
+                <span>로그인 중...</span>
               </>
             ) : (
-              <span>로그인</span>
+              <span>관리자 로그인</span>
             )}
           </button>
         </form>

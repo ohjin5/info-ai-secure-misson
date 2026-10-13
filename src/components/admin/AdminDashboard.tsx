@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { RefreshCw, ArrowLeft, ShieldCheck, AlertCircle } from "lucide-react";
+import { RefreshCw, ArrowLeft, ShieldCheck, AlertCircle, LogOut } from "lucide-react";
 import { SummaryCards } from "./SummaryCards";
 import { RankingTable } from "./RankingTable";
 import { DepartmentDetailModal } from "./DepartmentDetailModal";
@@ -13,12 +13,14 @@ interface AdminDashboardProps {
   adminPassword: string;
   initialData: AdminDataResponse;
   onBackToUser: () => void;
+  onLogout: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   adminPassword,
   initialData,
   onBackToUser,
+  onLogout,
 }) => {
   const [adminData, setAdminData] = useState<AdminDataResponse>(initialData);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -56,7 +58,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="space-y-6 pb-12 max-w-7xl mx-auto">
       {/* Top Admin Navigation Bar */}
-      <div className="bg-[#1E3A5F] text-white p-4 sm:p-5 rounded-2xl flex items-center justify-between shadow-md border border-[#102A45]">
+      <div className="bg-[#1E3A5F] text-white p-4 sm:p-5 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md border border-[#102A45]">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-[#2563EB] rounded-xl text-white">
             <ShieldCheck className="w-6 h-6" />
@@ -77,6 +79,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+            title="새로고침"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">새로고침</span>
@@ -86,9 +89,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             type="button"
             onClick={onBackToUser}
             className="p-2.5 bg-[#2563EB] hover:bg-blue-600 text-white rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+            title="사용자 화면"
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">사용자 화면</span>
+          </button>
+
+          {/* Logout Button */}
+          <button
+            type="button"
+            onClick={onLogout}
+            className="p-2.5 bg-rose-600/80 hover:bg-rose-600 text-white rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+            title="로그아웃"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>로그아웃</span>
           </button>
         </div>
       </div>

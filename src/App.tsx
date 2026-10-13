@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Header } from "./components/Header";
 import { MissionCard } from "./components/MissionCard";
 import { DepartmentCombobox } from "./components/DepartmentCombobox";
@@ -17,7 +17,16 @@ import { Loader2, AlertCircle, Send, Calendar } from "lucide-react";
 
 export default function App() {
   // Navigation View State: 'form' | 'success' | 'admin-login' | 'admin-dashboard'
-  const [view, setView] = useState<"form" | "success" | "admin-login" | "admin-dashboard">("form");
+  const [view, setView] = useState<"form" | "success" | "admin-login" | "admin-dashboard">(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === "/admin" || path.endsWith("/admin") || hash === "#admin") {
+        return "admin-login";
+      }
+    }
+    return "form";
+  });
 
   // Mission Settings State (Weekly active missions)
   const [currentWeek, setCurrentWeek] = useState("1");
@@ -41,26 +50,64 @@ export default function App() {
   const [adminPassword, setAdminPassword] = useState("");
   const [adminData, setAdminData] = useState<AdminDataResponse | null>(null);
 
-  // Load Mission Settings on Mount
-  useEffect(() => {
-    async function loadSettings() {
-      try {
-        setIsLoadingSettings(true);
-        const settings = await fetchMissionSettingsApi();
-        if (settings && settings.activeMissions && settings.activeMissions.length > 0) {
-          if (settings.currentWeek) setCurrentWeek(String(settings.currentWeek));
-          setActiveMissions(settings.activeMissions);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch mission settings on mount, using defaults", err);
-      } finally {
-        setIsLoadingSettings(false);
+  // Fetch Latest Mission Settings from Server
+  const loadMissionSettings = useCallback(async () => {
+    try {
+      setIsLoadingSettings(true);
+      const settings = await fetchMissionSettingsApi();
+      if (settings && settings.activeMissions && Array.isArray(settings.activeMissions)) {
+        const week = String(settings.currentWeek || "1");
+        const active = settings.activeMissions;
+        const visible = MISSIONS.filter((m) => active.includes(m.id));
+
+        console.log("Mission settings:", settings);
+        console.log("Active missions:", active);
+        console.log("Visible missions:", visible);
+
+        setCurrentWeek(week);
+        setActiveMissions(active);
+
+        // Deselect mission if it's no longer in active missions list
+        setSelectedMission((prev) => {
+          if (prev && !active.includes(prev.id)) {
+            return null;
+          }
+          return prev;
+        });
       }
+    } catch (err) {
+      console.warn("Failed to fetch mission settings on load, using defaults", err);
+    } finally {
+      setIsLoadingSettings(false);
     }
-    loadSettings();
   }, []);
 
-  // Filter visible missions based on activeMissions
+  // Re-fetch mission settings whenever view switches to 'form' (e.g. returning from Admin)
+  useEffect(() => {
+    if (view === "form") {
+      loadMissionSettings();
+    }
+  }, [view, loadMissionSettings]);
+
+  // Handle URL history state change listener
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const hash = window.location.hash;
+      if (path === "/admin" || path.endsWith("/admin") || hash === "#admin") {
+        if (!adminData) {
+          setView("admin-login");
+        }
+      } else if (view === "admin-login" || view === "admin-dashboard") {
+        setView("form");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [adminData, view]);
+
+  // Filter visible missions strictly based on activeMissions
   const visibleMissions = MISSIONS.filter((m) =>
     activeMissions.includes(m.id)
   );
@@ -88,7 +135,7 @@ export default function App() {
         name: name.trim(),
         description: description.trim(),
         imageData: imageData,
-        imageMimeType: "image/jpeg"
+        imageMimeType: "image/jpeg",
       });
 
       if (res && res.success !== false) {
@@ -115,6 +162,33 @@ export default function App() {
     setView("form");
   };
 
+  const navigateToAdmin = () => {
+    if (typeof window !== "undefined" && window.history) {
+      window.history.pushState({}, "", "/admin");
+    }
+    if (adminData && adminPassword) {
+      setView("admin-dashboard");
+    } else {
+      setView("admin-login");
+    }
+  };
+
+  const navigateToUser = () => {
+    if (typeof window !== "undefined" && window.history) {
+      window.history.pushState({}, "", "/");
+    }
+    setView("form");
+  };
+
+  const handleAdminLogout = () => {
+    setAdminPassword("");
+    setAdminData(null);
+    if (typeof window !== "undefined" && window.history) {
+      window.history.pushState({}, "", "/admin");
+    }
+    setView("admin-login");
+  };
+
   // Render Admin Flow
   if (view === "admin-login") {
     return (
@@ -125,7 +199,7 @@ export default function App() {
             setAdminData(data);
             setView("admin-dashboard");
           }}
-          onBackToUser={() => setView("form")}
+          onBackToUser={navigateToUser}
         />
       </div>
     );
@@ -137,7 +211,8 @@ export default function App() {
         <AdminDashboard
           adminPassword={adminPassword}
           initialData={adminData}
-          onBackToUser={() => setView("form")}
+          onBackToUser={navigateToUser}
+          onLogout={handleAdminLogout}
         />
       </div>
     );
@@ -157,7 +232,7 @@ export default function App() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5 pb-24">
             {/* Header & Campaign Banner */}
-            <Header />
+            <Header onNavigateToAdmin={navigateToAdmin} />
 
             {/* Section 1: Select Mission */}
             <section className="bg-white border border-[#D9E2EC] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
@@ -182,7 +257,7 @@ export default function App() {
                 이번 주 정보보호 미션을 선택해주세요.
               </div>
 
-              {/* Skeleton or Mission Cards */}
+              {/* Skeleton or Active Mission Cards */}
               {isLoadingSettings ? (
                 <div className="space-y-3 py-2">
                   <div className="h-24 bg-slate-100 animate-pulse rounded-2xl" />
@@ -190,7 +265,7 @@ export default function App() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {(visibleMissions.length > 0 ? visibleMissions : MISSIONS).map((m) => (
+                  {visibleMissions.map((m) => (
                     <MissionCard
                       key={m.id}
                       mission={m}
@@ -290,18 +365,20 @@ export default function App() {
         )}
       </main>
 
-      {/* Subtle Admin Link Footer */}
-      <footer className="w-full border-t border-[#D9E2EC] py-6 px-4 bg-white text-center text-xs text-[#64748B] space-y-2">
-        <p>© 2026 병원 정보보호팀 · 정보보호 미션 챌린지</p>
-        <div>
+      {/* Footer with Subtle Admin Link */}
+      <footer className="w-full border-t border-[#D9E2EC] py-6 px-4 bg-white text-center text-xs text-[#64748B] space-y-1.5">
+        <p className="font-semibold text-[#172033]">2026 정보보호 미션 챌린지</p>
+        <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
+          <span>개인정보 안내</span>
+          <span aria-hidden="true">·</span>
           <button
             type="button"
-            onClick={() => setView("admin-login")}
-            className="text-[#64748B] hover:text-[#2563EB] underline underline-offset-2 transition-colors cursor-pointer text-[11px]"
+            onClick={navigateToAdmin}
+            className="text-[#64748B] hover:text-[#2563EB] underline underline-offset-2 transition-colors cursor-pointer"
           >
             관리자
           </button>
-        </div>
+        </p>
       </footer>
     </div>
   );

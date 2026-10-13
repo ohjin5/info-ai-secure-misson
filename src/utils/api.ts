@@ -89,20 +89,27 @@ export async function fetchMissionSettingsApi(): Promise<MissionSettings | null>
   try {
     const res = await postToAppsScript<{
       success?: boolean;
-      currentWeek?: string;
+      currentWeek?: string | number;
       activeMissions?: string[];
       missionSettings?: MissionSettings;
     }>({ action: "missionSettings" });
 
-    if (res.missionSettings) {
-      return res.missionSettings;
-    }
-    if (res.currentWeek && res.activeMissions) {
+    console.log("Mission settings raw response:", res);
+
+    if (res.missionSettings && Array.isArray(res.missionSettings.activeMissions)) {
       return {
-        currentWeek: String(res.currentWeek),
+        currentWeek: String(res.missionSettings.currentWeek || "1"),
+        activeMissions: res.missionSettings.activeMissions
+      };
+    }
+
+    if (res.activeMissions && Array.isArray(res.activeMissions)) {
+      return {
+        currentWeek: String(res.currentWeek || "1"),
         activeMissions: res.activeMissions
       };
     }
+
     return null;
   } catch (err) {
     console.warn("Failed to fetch mission settings, using defaults", err);
@@ -134,10 +141,10 @@ export async function updateMissionSettingsApi(
   const body = {
     action: "updateMissionSettings",
     adminPassword,
-    currentWeek,
+    currentWeek: String(currentWeek),
     activeMissions
   };
-  return postToAppsScript<{ success: boolean; message?: string }>(body);
+  return postToAppsScript<{ success: boolean; message?: string; currentWeek?: string; activeMissions?: string[] }>(body);
 }
 
 export async function reviewSubmissionApi(

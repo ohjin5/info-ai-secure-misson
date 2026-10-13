@@ -28,7 +28,7 @@ export const MissionManagement: React.FC<MissionManagementProps> = ({
   useEffect(() => {
     if (initialSettings) {
       if (initialSettings.currentWeek) {
-        setSelectedWeek(initialSettings.currentWeek);
+        setSelectedWeek(String(initialSettings.currentWeek));
       }
       if (initialSettings.activeMissions && initialSettings.activeMissions.length > 0) {
         setActiveMissions(initialSettings.activeMissions);
@@ -62,9 +62,11 @@ export const MissionManagement: React.FC<MissionManagementProps> = ({
 
       const res = await updateMissionSettingsApi(
         adminPassword,
-        selectedWeek,
+        String(selectedWeek),
         activeMissions
       );
+
+      console.log("updateMissionSettings response:", res);
 
       if (res && res.success !== false) {
         setToastMessage("미션 운영 설정이 저장되었습니다.");
@@ -73,7 +75,7 @@ export const MissionManagement: React.FC<MissionManagementProps> = ({
           setToastMessage(null);
         }, 3000);
       } else {
-        setErrorMsg(res.message || "설정 저장에 실패했습니다.");
+        setErrorMsg(res?.message || "설정 저장에 실패했습니다.");
       }
     } catch (err) {
       console.error("Failed to update mission settings", err);

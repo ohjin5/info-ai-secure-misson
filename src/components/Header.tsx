@@ -1,7 +1,11 @@
 import React from "react";
-import { ShieldCheck, AlertTriangle, Lock } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Lock, Shield } from "lucide-react";
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onNavigateToAdmin?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onNavigateToAdmin }) => {
   return (
     <header className="w-full space-y-3.5">
       {/* Hospital Campaign Top Banner - Navy & Primary Blue Accent */}
@@ -12,13 +16,28 @@ export const Header: React.FC = () => {
           <ShieldCheck className="w-32 h-32 text-blue-200" />
         </div>
 
-        <div className="relative z-10 space-y-2.5">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-blue-100 tracking-tight">
-            <Lock className="w-3.5 h-3.5 text-blue-300" />
-            <span>병원 교직원 정보보호 캠페인</span>
+        <div className="relative z-10 space-y-3">
+          {/* Top Row: Campaign Badge + Admin Button */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-blue-100 tracking-tight">
+              <Lock className="w-3.5 h-3.5 text-blue-300" />
+              <span>병원 교직원 정보보호 캠페인</span>
+            </div>
+
+            {/* Secondary Admin Button */}
+            {onNavigateToAdmin && (
+              <button
+                type="button"
+                onClick={onNavigateToAdmin}
+                className="min-h-[40px] px-3.5 bg-white hover:bg-[#EAF2FF] text-[#1E3A5F] border border-[#CBD5E1] rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer shrink-0 active:scale-[0.98]"
+              >
+                <Shield className="w-4 h-4 text-[#2563EB]" />
+                <span>관리자</span>
+              </button>
+            )}
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight pt-1">
             2026 정보보호 미션 챌린지
           </h1>
 
@@ -28,7 +47,7 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Patient Privacy Warning Banner - Clean Amber/Notice Callout */}
+      {/* Patient Privacy Warning Banner */}
       <div className="bg-amber-50/90 border border-amber-200 rounded-xl p-3.5 sm:p-4 flex items-start gap-3 shadow-xs">
         <div className="p-1.5 bg-amber-100 text-amber-800 rounded-lg shrink-0 mt-0.5">
           <AlertTriangle className="w-5 h-5" />
