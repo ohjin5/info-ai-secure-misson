@@ -5,44 +5,80 @@ export interface Mission {
   id: string;
   title: string;
   description: string;
+
+  /**
+   * 실제 미션 수행 방법
+   */
   guide: string;
-  icon: "lock" | "sparkles" | "printer" | "monitor-check" | "shield-check";
+
+  /**
+   * 사진 인증 방법
+   */
+  verificationGuide: string;
+
+  icon:
+    | "lock"
+    | "sparkles"
+    | "printer"
+    | "monitor-check"
+    | "shield-check";
 }
 
 export const MISSIONS: Mission[] = [
   {
     id: "M01",
     title: "잠깐 자리 비울 때도 LOCK!",
-    description: "자리를 비우기 전 PC 화면을 잠가주세요.",
-    guide: "Windows + L을 눌러 화면을 잠근 후 인증해주세요.",
+    description:
+      "자리를 비우기 전 PC 화면을 잠가주세요.",
+    guide:
+      "자리를 비우기 전 Windows + L을 눌러 PC 화면을 잠가주세요.",
+    verificationGuide:
+      "잠금 처리된 PC 화면이 보이도록 촬영해주세요.",
     icon: "lock"
   },
   {
     id: "M02",
     title: "클린데스크 만들기",
-    description: "업무공간에 개인정보나 중요자료가 방치되어 있지 않도록 정리해주세요.",
-    guide: "정리가 완료된 업무공간을 촬영해주세요.",
+    description:
+      "업무공간에 개인정보나 중요자료가 방치되어 있지 않도록 정리해주세요.",
+    guide:
+      "책상 위 개인정보·업무자료를 정리하고 필요한 문서는 서랍이나 보관함에 보관해주세요.",
+    verificationGuide:
+      "개인정보가 노출되지 않도록 정리가 완료된 업무공간을 촬영해주세요.",
     icon: "sparkles"
   },
   {
     id: "M03",
     title: "프린터 주변 점검",
-    description: "프린터·복합기에 출력물이 방치되어 있지 않은지 확인해주세요.",
-    guide: "출력물이 남아 있지 않은 상태를 인증해주세요.",
+    description:
+      "프린터·복합기에 출력물이 방치되어 있지 않은지 확인해주세요.",
+    guide:
+      "프린터·복합기 주변을 확인하고 본인이 출력한 자료는 즉시 회수해주세요.",
+    verificationGuide:
+      "출력물이 방치되어 있지 않은 프린터·복합기 주변을 촬영해주세요.",
     icon: "printer"
   },
   {
     id: "M04",
     title: "내 PC 정보보호 점검",
-    description: "내 PC에 불필요한 파일이나 개인정보 흔적이 남아 있지 않은지 점검해주세요.",
-    guide: "점검 또는 정리를 완료한 화면을 인증해주세요.",
+    description:
+      "내 PC에 불필요한 파일이나 개인정보 흔적이 남아 있지 않은지 점검해주세요.",
+    guide:
+      "불필요한 다운로드 파일, 임시파일 등 업무 PC의 정보 노출 요소를 확인하고 정리해주세요.",
+    verificationGuide:
+      "환자정보나 개인정보가 노출되지 않는 범위에서 점검 또는 정리가 완료된 화면을 촬영해주세요.",
     icon: "monitor-check"
   },
   {
     id: "M05",
-    title: "우리 팀의 정보보호 활동 자랑하기",
-    description: "우리 팀에서 정보보호를 위해 실천하고 있는 모습을 자유롭게 찾아주세요.",
-    guide: "정보보호를 위해 실제로 하고 있는 활동이나 환경을 촬영해주세요.",
+    title:
+      "우리 팀의 정보보호 활동 자랑하기",
+    description:
+      "우리 팀에서 정보보호를 위해 실천하고 있는 모습을 자유롭게 찾아주세요.",
+    guide:
+      "평소 우리 팀에서 실천하고 있는 정보보호 활동이나 관리방법을 하나 찾아주세요.",
+    verificationGuide:
+      "보안서류함, 문서 파쇄, 정리된 업무환경 등 정보보호 활동을 보여주는 사진을 촬영해주세요.",
     icon: "shield-check"
   }
 ];
@@ -92,7 +128,8 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
     ]
   },
   {
-    category: "전문센터 및 병원",
+    category:
+      "전문센터 및 병원",
     items: [
       "통합내과 외래",
       "유방센터",
@@ -208,6 +245,12 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
   }
 ];
 
-export const DEPARTMENTS: string[] = Array.from(
-  new Set(DEPARTMENT_CATEGORIES.flatMap((c) => c.items))
-);
+export const DEPARTMENTS: string[] =
+  Array.from(
+    new Set(
+      DEPARTMENT_CATEGORIES.flatMap(
+        (category) =>
+          category.items
+      )
+    )
+  );

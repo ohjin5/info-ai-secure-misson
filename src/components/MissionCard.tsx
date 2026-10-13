@@ -1,5 +1,16 @@
 import React from "react";
-import { Lock, Sparkles, Printer, MonitorCheck, ShieldCheck, CheckCircle2, Info } from "lucide-react";
+import {
+  Lock,
+  Sparkles,
+  Printer,
+  MonitorCheck,
+  ShieldCheck,
+  CheckCircle2,
+  Info,
+  Camera,
+  AlertTriangle,
+} from "lucide-react";
+
 import { Mission } from "../constants";
 
 interface MissionCardProps {
@@ -17,14 +28,19 @@ export const MissionCard: React.FC<MissionCardProps> = ({
     switch (iconType) {
       case "lock":
         return <Lock className="w-5 h-5" />;
+
       case "sparkles":
         return <Sparkles className="w-5 h-5" />;
+
       case "printer":
         return <Printer className="w-5 h-5" />;
+
       case "monitor-check":
         return <MonitorCheck className="w-5 h-5" />;
+
       case "shield-check":
         return <ShieldCheck className="w-5 h-5" />;
+
       default:
         return <ShieldCheck className="w-5 h-5" />;
     }
@@ -34,14 +50,16 @@ export const MissionCard: React.FC<MissionCardProps> = ({
     <button
       type="button"
       onClick={() => onSelect(mission)}
+      aria-pressed={isSelected}
       className={`w-full text-left transition-all duration-200 rounded-2xl p-4 sm:p-5 relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-600 ${
         isSelected
           ? "bg-[#EAF2FF] border-2 border-[#2563EB] shadow-xs"
           : "bg-white border border-[#D9E2EC] hover:border-blue-300 hover:bg-slate-50/80 shadow-xs"
       }`}
     >
+      {/* 상단 영역 */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <div
             className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
               isSelected
@@ -51,7 +69,8 @@ export const MissionCard: React.FC<MissionCardProps> = ({
           >
             {getIcon(mission.icon)}
           </div>
-          <div>
+
+          <div className="min-w-0">
             <span
               className={`text-[11px] font-bold tracking-wider uppercase ${
                 isSelected ? "text-[#2563EB]" : "text-[#1E3A5F]"
@@ -59,13 +78,14 @@ export const MissionCard: React.FC<MissionCardProps> = ({
             >
               미션 {mission.id}
             </span>
-            <h3 className="text-base sm:text-lg font-bold text-[#172033] leading-snug">
+
+            <h3 className="text-base sm:text-lg font-bold text-[#172033] leading-snug break-keep">
               {mission.title}
             </h3>
           </div>
         </div>
 
-        {/* Radio/Check button indicator */}
+        {/* 선택 상태 */}
         <div className="shrink-0 mt-0.5">
           {isSelected ? (
             <CheckCircle2 className="w-6 h-6 text-[#2563EB] fill-blue-100" />
@@ -75,17 +95,56 @@ export const MissionCard: React.FC<MissionCardProps> = ({
         </div>
       </div>
 
+      {/* 기본 설명 */}
       <p className="text-xs sm:text-sm text-[#64748B] mt-2.5 leading-relaxed font-normal">
         {mission.description}
       </p>
 
-      {/* Expanded Guide when selected */}
+      {/* 선택 시 상세 안내 */}
       {isSelected && (
-        <div className="mt-3.5 pt-3 border-t border-blue-200/80 bg-white/80 p-3 rounded-xl flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
-          <div className="text-xs sm:text-sm text-[#172033] font-medium">
-            <span className="font-bold text-[#1E3A5F]">수행 방법: </span>
-            {mission.guide}
+        <div className="mt-4 pt-4 border-t border-blue-200/80 space-y-3">
+          {/* 수행 방법 */}
+          <div className="bg-white/90 border border-blue-100 rounded-xl p-3 flex items-start gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#EAF2FF] flex items-center justify-center shrink-0">
+              <Info className="w-4 h-4 text-[#2563EB]" />
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="text-xs font-bold text-[#1E3A5F]">
+                수행 방법
+              </div>
+
+              <p className="text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">
+                {mission.guide}
+              </p>
+            </div>
+          </div>
+
+          {/* 인증 방법 */}
+          <div className="bg-white/90 border border-blue-100 rounded-xl p-3 flex items-start gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#EAF2FF] flex items-center justify-center shrink-0">
+              <Camera className="w-4 h-4 text-[#2563EB]" />
+            </div>
+
+            <div className="space-y-0.5">
+              <div className="text-xs font-bold text-[#1E3A5F]">
+                인증 방법
+              </div>
+
+              <p className="text-xs sm:text-sm text-[#334155] leading-relaxed font-medium">
+                {mission.verificationGuide}
+              </p>
+            </div>
+          </div>
+
+          {/* 개인정보 안내 */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-[#64748B] shrink-0 mt-0.5" />
+
+            <p className="text-[11px] sm:text-xs text-[#64748B] leading-relaxed font-medium">
+              인증사진에 환자 이름, 등록번호, 의무기록, 비밀번호 등
+              개인정보가 보이지 않는지 반드시 확인해주세요.
+            </p>
           </div>
         </div>
       )}
