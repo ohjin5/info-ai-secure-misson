@@ -1,13 +1,22 @@
 export const APPS_SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbxrsNwCQ4d-EczxzLRgmITkiyS_x1ff-D9_iyejomG68qs8ML_ymUbzJlWXjKLS1pHd/exec";
 
+
 export interface Mission {
   id: string;
+
+  /**
+   * 카드에 크게 보이는 미션명
+   */
   title: string;
+
+  /**
+   * 카드에 보이는 짧은 한 줄 설명
+   */
   description: string;
 
   /**
-   * 실제 미션 수행 방법
+   * 실제 수행 방법
    */
   guide: string;
 
@@ -21,72 +30,179 @@ export interface Mission {
     | "sparkles"
     | "printer"
     | "monitor-check"
-    | "shield-check";
+    | "shield-check"
+    | "trash"
+    | "archive"
+    | "eye"
+    | "mail"
+    | "file-check"
+    | "door-closed"
+    | "key-round";
 }
+
 
 export const MISSIONS: Mission[] = [
   {
     id: "M01",
-    title: "잠깐 자리 비울 때도 LOCK!",
-    description:
-      "자리를 비우기 전 PC 화면을 잠가주세요.",
+    title: "잠그GO",
+    description: "자리 비울 땐 PC 화면 잠금",
     guide:
       "자리를 비우기 전 Windows + L을 눌러 PC 화면을 잠가주세요.",
     verificationGuide:
       "잠금 처리된 PC 화면이 보이도록 촬영해주세요.",
     icon: "lock"
   },
+
   {
     id: "M02",
-    title: "클린데스크 만들기",
-    description:
-      "업무공간에 개인정보나 중요자료가 방치되어 있지 않도록 정리해주세요.",
+    title: "파쇄하GO",
+    description: "불필요한 개인정보 문서는 바로 파쇄",
     guide:
-      "책상 위 개인정보·업무자료를 정리하고 필요한 문서는 서랍이나 보관함에 보관해주세요.",
+      "업무가 끝난 개인정보 문서나 중요자료 중 더 이상 보관할 필요가 없는 문서는 일반 쓰레기통이 아닌 파쇄기를 이용해 폐기해주세요.",
+    verificationGuide:
+      "개인정보가 보이지 않도록 주의하면서 문서를 파쇄하는 모습이나 파쇄 완료 상태를 촬영해주세요.",
+    icon: "trash"
+  },
+
+  {
+    id: "M03",
+    title: "회수하GO",
+    description: "출력물은 프린터에 두지 않고 바로 회수",
+    guide:
+      "프린터·복합기 사용 후 출력물이 남아 있지 않은지 확인하고 본인이 출력한 자료는 즉시 회수해주세요.",
+    verificationGuide:
+      "출력물이 방치되어 있지 않은 프린터 또는 복합기 주변을 촬영해주세요.",
+    icon: "printer"
+  },
+
+  {
+    id: "M04",
+    title: "치우GO",
+    description: "책상 위 개인정보와 중요자료 정리",
+    guide:
+      "책상 위에 환자정보, 개인정보, 내부 업무자료 등이 방치되어 있지 않도록 정리하고 필요한 문서는 서랍이나 보관함에 보관해주세요.",
     verificationGuide:
       "개인정보가 노출되지 않도록 정리가 완료된 업무공간을 촬영해주세요.",
     icon: "sparkles"
   },
-  {
-    id: "M03",
-    title: "프린터 주변 점검",
-    description:
-      "프린터·복합기에 출력물이 방치되어 있지 않은지 확인해주세요.",
-    guide:
-      "프린터·복합기 주변을 확인하고 본인이 출력한 자료는 즉시 회수해주세요.",
-    verificationGuide:
-      "출력물이 방치되어 있지 않은 프린터·복합기 주변을 촬영해주세요.",
-    icon: "printer"
-  },
-  {
-    id: "M04",
-    title: "내 PC 정보보호 점검",
-    description:
-      "내 PC에 불필요한 파일이나 개인정보 흔적이 남아 있지 않은지 점검해주세요.",
-    guide:
-      "불필요한 다운로드 파일, 임시파일 등 업무 PC의 정보 노출 요소를 확인하고 정리해주세요.",
-    verificationGuide:
-      "환자정보나 개인정보가 노출되지 않는 범위에서 점검 또는 정리가 완료된 화면을 촬영해주세요.",
-    icon: "monitor-check"
-  },
+
   {
     id: "M05",
-    title:
-      "우리 팀의 정보보호 활동 자랑하기",
-    description:
-      "우리 팀에서 정보보호를 위해 실천하고 있는 모습을 자유롭게 찾아주세요.",
+    title: "보관하GO",
+    description: "중요 문서는 잠금장이나 서랍에 보관",
     guide:
-      "평소 우리 팀에서 실천하고 있는 정보보호 활동이나 관리방법을 하나 찾아주세요.",
+      "개인정보나 중요 업무자료는 사용 후 책상 위에 두지 말고 잠금장, 서랍 또는 지정된 보관함에 보관해주세요.",
+    verificationGuide:
+      "개인정보가 노출되지 않도록 주의하면서 문서가 보관된 잠금장이나 서랍의 상태를 촬영해주세요.",
+    icon: "archive"
+  },
+
+  {
+    id: "M06",
+    title: "정리하GO",
+    description: "PC에 남은 불필요한 업무파일 정리",
+    guide:
+      "다운로드 폴더, 바탕화면, 임시폴더 등에 불필요한 개인정보나 업무파일이 남아 있지 않은지 확인하고 정리해주세요.",
+    verificationGuide:
+      "환자정보나 개인정보가 노출되지 않는 범위에서 정리가 완료된 PC 화면을 촬영해주세요.",
+    icon: "monitor-check"
+  },
+
+  {
+    id: "M07",
+    title: "확인하GO",
+    description: "모니터에 개인정보가 노출되지 않는지 확인",
+    guide:
+      "자리에서 화면이 외부에 그대로 노출되어 있지 않은지 확인하고, 필요하지 않은 개인정보 화면은 닫거나 최소화해주세요.",
+    verificationGuide:
+      "개인정보가 노출되지 않은 안전한 업무 화면 또는 정리된 모니터 환경을 촬영해주세요.",
+    icon: "eye"
+  },
+
+  {
+    id: "M08",
+    title: "지키GO",
+    description: "비밀번호·계정정보 메모는 남기지 않기",
+    guide:
+      "모니터, 책상, 키보드 주변 등에 비밀번호나 계정정보를 적은 메모가 붙어 있지 않은지 확인하고 제거해주세요.",
+    verificationGuide:
+      "비밀번호 메모가 없는 정리된 업무공간을 촬영해주세요.",
+    icon: "key-round"
+  },
+
+  {
+    id: "M09",
+    title: "가리GO",
+    description: "개인정보 문서는 보이지 않게 뒤집거나 보관",
+    guide:
+      "잠시 자리를 비울 때 책상 위 문서에 개인정보가 노출되지 않도록 문서를 뒤집거나 서랍에 보관해주세요.",
+    verificationGuide:
+      "개인정보가 보이지 않도록 정리된 문서 상태를 촬영해주세요.",
+    icon: "file-check"
+  },
+
+  {
+    id: "M10",
+    title: "확인하GO+",
+    description: "메일 보내기 전 수신자·첨부파일 다시 확인",
+    guide:
+      "메일 발송 전 수신자, 참조자, 첨부파일을 다시 확인하고 개인정보나 내부자료가 잘못 포함되지 않았는지 점검해주세요.",
+    verificationGuide:
+      "실제 개인정보나 메일주소가 노출되지 않도록 주의하면서 발송 전 확인 화면 또는 점검 모습을 촬영해주세요.",
+    icon: "mail"
+  },
+
+  {
+    id: "M11",
+    title: "분리하GO",
+    description: "일반폐기와 파쇄 대상 문서를 구분",
+    guide:
+      "개인정보나 중요정보가 포함된 문서는 일반 쓰레기통에 버리지 않고 파쇄 대상 문서로 구분해주세요.",
+    verificationGuide:
+      "개인정보가 직접 보이지 않도록 하면서 파쇄 대상 문서함 또는 분리된 상태를 촬영해주세요.",
+    icon: "trash"
+  },
+
+  {
+    id: "M12",
+    title: "닫GO",
+    description: "보관함과 중요자료 공간은 사용 후 닫기",
+    guide:
+      "개인정보 또는 중요자료가 보관된 캐비닛, 서랍, 보관함 등은 사용 후 반드시 닫아주세요.",
+    verificationGuide:
+      "닫혀 있는 캐비닛, 서랍 또는 보관함 상태를 촬영해주세요.",
+    icon: "door-closed"
+  },
+
+  {
+    id: "M13",
+    title: "점검하GO",
+    description: "우리 부서의 정보보호 취약요소 하나 점검",
+    guide:
+      "우리 부서에서 개인정보 노출이나 정보보호 사고로 이어질 수 있는 요소를 하나 찾아 점검하고 개선해주세요.",
+    verificationGuide:
+      "개인정보가 노출되지 않는 범위에서 점검 또는 개선된 모습을 촬영해주세요.",
+    icon: "shield-check"
+  },
+
+  {
+    id: "M14",
+    title: "자랑하GO",
+    description: "우리 팀의 정보보호 실천을 공유",
+    guide:
+      "우리 팀에서 평소 실천하고 있는 정보보호 활동이나 좋은 관리방법을 하나 찾아주세요.",
     verificationGuide:
       "보안서류함, 문서 파쇄, 정리된 업무환경 등 정보보호 활동을 보여주는 사진을 촬영해주세요.",
     icon: "shield-check"
   }
 ];
 
+
 export interface DepartmentCategory {
   category: string;
   items: string[];
 }
+
 
 export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
   {
@@ -127,9 +243,9 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
       "응급의학과"
     ]
   },
+
   {
-    category:
-      "전문센터 및 병원",
+    category: "전문센터 및 병원",
     items: [
       "통합내과 외래",
       "유방센터",
@@ -157,6 +273,7 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
       "장기이식병원"
     ]
   },
+
   {
     category: "진료지원",
     items: [
@@ -167,6 +284,7 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
       "진료협력센터"
     ]
   },
+
   {
     category: "행정부",
     items: [
@@ -185,6 +303,7 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
       "고객행복팀"
     ]
   },
+
   {
     category: "연구지원",
     items: [
@@ -192,6 +311,7 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
       "연구윤리사무국"
     ]
   },
+
   {
     category: "간호부",
     items: [
@@ -201,6 +321,7 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
       "병동간호2팀"
     ]
   },
+
   {
     category: "외래/특수 Unit",
     items: [
@@ -219,6 +340,7 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
       "뇌졸중집중치료실Unit"
     ]
   },
+
   {
     category: "병동 Unit",
     items: [
@@ -245,11 +367,14 @@ export const DEPARTMENT_CATEGORIES: DepartmentCategory[] = [
   }
 ];
 
+
 export const DEPARTMENTS: string[] =
   Array.from(
     new Set(
       DEPARTMENT_CATEGORIES.flatMap(
-        (category) =>
+        (
+          category
+        ) =>
           category.items
       )
     )

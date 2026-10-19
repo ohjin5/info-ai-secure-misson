@@ -9,7 +9,9 @@ import {
   Check,
   Loader2,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Circle,
+  CheckCircle2
 } from "lucide-react";
 
 import {
@@ -24,8 +26,11 @@ import {
 
 interface MissionManagementProps {
   adminPassword: string;
+
   initialSettings?: MissionSettings;
-  onSettingsUpdated: () => Promise<void> | void;
+
+  onSettingsUpdated:
+    () => Promise<void> | void;
 }
 
 
@@ -36,35 +41,66 @@ export const MissionManagement:
     onSettingsUpdated
   }) => {
 
+    /**
+     * 현재 운영 주차
+     */
     const [
       selectedWeek,
       setSelectedWeek
-    ] = useState(
-      String(
-        initialSettings?.currentWeek ??
-        "1"
-      )
-    );
+    ] =
+      useState(
+        String(
+          initialSettings?.currentWeek ??
+          "1"
+        )
+      );
 
+
+    /**
+     * 이번 주 활성 미션
+     *
+     * API 구조는 string[]을 유지하지만
+     * 실제로는 1개만 저장
+     */
     const [
       activeMissions,
       setActiveMissions
-    ] = useState<string[]>(
-      initialSettings
-        ?.activeMissions
-        ?.length
-        ? initialSettings.activeMissions
-        : MISSIONS.map(
-            (mission) =>
-              mission.id
-          )
-    );
+    ] =
+      useState<string[]>(() => {
+
+        if (
+          initialSettings?.activeMissions &&
+          initialSettings.activeMissions.length >
+            0
+        ) {
+          return [
+            initialSettings.activeMissions[0]
+          ];
+        }
+
+
+        if (
+          MISSIONS.length >
+          0
+        ) {
+          return [
+            MISSIONS[0].id
+          ];
+        }
+
+
+        return [];
+      });
 
 
     const [
       isSaving,
       setIsSaving
-    ] = useState(false);
+    ] =
+      useState(
+        false
+      );
+
 
     const [
       toastMessage,
@@ -73,6 +109,7 @@ export const MissionManagement:
       useState<string | null>(
         null
       );
+
 
     const [
       errorMsg,
@@ -84,46 +121,68 @@ export const MissionManagement:
 
 
     /**
-     * 서버에서 최신 설정을 다시 받으면
-     * 관리자 화면 상태도 동기화
+     * 서버 설정이 갱신되면
+     * 관리자 화면도 동기화
      */
-    useEffect(() => {
+    useEffect(
+      () => {
 
-      if (!initialSettings) {
-        return;
-      }
-
-
-      setSelectedWeek(
-        String(
-          initialSettings.currentWeek ??
-          "1"
-        )
-      );
+        if (
+          !initialSettings
+        ) {
+          return;
+        }
 
 
-      if (
-        Array.isArray(
-          initialSettings.activeMissions
-        ) &&
-        initialSettings
-          .activeMissions.length >
-          0
-      ) {
-        setActiveMissions(
-          initialSettings.activeMissions
+        setSelectedWeek(
+          String(
+            initialSettings.currentWeek ??
+            "1"
+          )
         );
-      }
 
-    }, [
-      initialSettings
-    ]);
+
+        if (
+          Array.isArray(
+            initialSettings.activeMissions
+          ) &&
+          initialSettings.activeMissions.length >
+            0
+        ) {
+
+          /**
+           * 과거 설정에 여러 개가 저장돼 있어도
+           * 첫 번째 미션 1개만 사용
+           */
+          setActiveMissions([
+            initialSettings.activeMissions[0]
+          ]);
+
+        } else if (
+          MISSIONS.length >
+          0
+        ) {
+
+          setActiveMissions([
+            MISSIONS[0].id
+          ]);
+
+        }
+
+      },
+      [
+        initialSettings
+      ]
+    );
 
 
     /**
-     * 미션 선택/해제
+     * 미션 선택
+     *
+     * 라디오 버튼처럼 동작:
+     * 새 미션을 누르면 기존 선택은 자동 해제
      */
-    const toggleMission = (
+    const selectMission = (
       missionId: string
     ) => {
 
@@ -131,66 +190,33 @@ export const MissionManagement:
         null
       );
 
+
       setToastMessage(
         null
       );
 
 
-      setActiveMissions(
-        (previous) => {
-
-          if (
-            previous.includes(
-              missionId
-            )
-          ) {
-
-            /**
-             * 최소 1개는 반드시 유지
-             */
-            if (
-              previous.length <=
-              1
-            ) {
-
-              setErrorMsg(
-                "최소 1개 이상의 미션을 선택해야 합니다."
-              );
-
-              return previous;
-            }
-
-
-            return previous.filter(
-              (id) =>
-                id !==
-                missionId
-            );
-          }
-
-
-          return [
-            ...previous,
-            missionId
-          ];
-        }
-      );
+      setActiveMissions([
+        missionId
+      ]);
     };
 
 
     /**
-     * 운영 설정 저장
+     * 설정 저장
      */
     const handleSave =
       async () => {
 
         if (
-          activeMissions.length ===
-          0
+          activeMissions.length !==
+          1
         ) {
+
           setErrorMsg(
-            "최소 1개 이상의 미션을 선택해주세요."
+            "이번 주 미션을 1개 선택해주세요."
           );
+
 
           return;
         }
@@ -214,6 +240,7 @@ export const MissionManagement:
             "운영 주차는 1주차부터 10주차까지 선택할 수 있습니다."
           );
 
+
           return;
         }
 
@@ -224,9 +251,11 @@ export const MissionManagement:
             true
           );
 
+
           setErrorMsg(
             null
           );
+
 
           setToastMessage(
             null
@@ -235,32 +264,41 @@ export const MissionManagement:
 
           await updateMissionSettingsApi(
             adminPassword,
-            String(week),
-            activeMissions
+            String(
+              week
+            ),
+            [
+              activeMissions[0]
+            ]
           );
 
 
           setToastMessage(
-            "미션 운영 설정이 저장되었습니다."
+            `${week}주차 미션이 저장되었습니다.`
           );
 
 
           /**
-           * 저장 후 관리자 전체 데이터 재조회
+           * 관리자 데이터 다시 조회
            */
           await onSettingsUpdated();
 
 
           window.setTimeout(
             () => {
+
               setToastMessage(
                 null
               );
+
             },
             3000
           );
 
-        } catch (error) {
+
+        } catch (
+          error
+        ) {
 
           console.error(
             "Failed to update mission settings:",
@@ -274,13 +312,33 @@ export const MissionManagement:
               : "설정 저장 중 오류가 발생했습니다."
           );
 
+
         } finally {
 
           setIsSaving(
             false
           );
+
         }
+
       };
+
+
+    const selectedMissionId =
+      activeMissions.length >
+      0
+        ? activeMissions[0]
+        : null;
+
+
+    const selectedMission =
+      MISSIONS.find(
+        (
+          mission
+        ) =>
+          mission.id ===
+          selectedMissionId
+      );
 
 
     return (
@@ -293,6 +351,7 @@ export const MissionManagement:
 
             <Settings className="w-5 h-5 text-[#2563EB]" />
 
+
             <h3 className="text-base sm:text-lg font-extrabold text-[#172033]">
               미션 운영 관리
             </h3>
@@ -301,7 +360,7 @@ export const MissionManagement:
 
 
           <span className="text-xs text-[#64748B] font-medium">
-            사용자 화면에 노출할 미션과 현재 운영 주차를 설정합니다.
+            주차별로 공개할 미션 1개를 설정합니다.
           </span>
 
         </div>
@@ -314,6 +373,7 @@ export const MissionManagement:
 
             <Calendar className="w-4 h-4 text-[#2563EB] shrink-0" />
 
+
             <label
               htmlFor="mission-week-select"
               className="text-sm font-bold text-[#172033]"
@@ -324,12 +384,15 @@ export const MissionManagement:
 
             <select
               id="mission-week-select"
+
               value={
                 selectedWeek
               }
+
               disabled={
                 isSaving
               }
+
               onChange={(
                 event
               ) => {
@@ -338,14 +401,18 @@ export const MissionManagement:
                   event.target.value
                 );
 
+
                 setErrorMsg(
                   null
                 );
 
+
                 setToastMessage(
                   null
                 );
+
               }}
+
               className="h-9 px-3 bg-white border border-[#D9E2EC] rounded-lg text-sm font-bold text-[#1E3A5F] focus:outline-none focus:border-[#2563EB] disabled:opacity-60"
             >
 
@@ -357,16 +424,19 @@ export const MissionManagement:
                   _,
                   index
                 ) => {
+
                   const week =
                     String(
                       index + 1
                     );
+
 
                   return (
                     <option
                       key={
                         week
                       }
+
                       value={
                         week
                       }
@@ -374,6 +444,7 @@ export const MissionManagement:
                       {week}주차
                     </option>
                   );
+
                 }
               )}
 
@@ -384,12 +455,17 @@ export const MissionManagement:
 
           <button
             type="button"
+
             disabled={
-              isSaving
+              isSaving ||
+              activeMissions.length !==
+                1
             }
+
             onClick={
               handleSave
             }
+
             className="h-10 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:pointer-events-none text-white font-bold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs shrink-0"
           >
 
@@ -403,15 +479,53 @@ export const MissionManagement:
 
             )}
 
+
             <span>
+
               {isSaving
                 ? "저장 중..."
                 : "변경사항 저장"}
+
             </span>
 
           </button>
 
         </div>
+
+
+        {/* 현재 선택 */}
+        {selectedMission && (
+
+          <div className="bg-[#EAF2FF] border border-blue-200 rounded-xl p-3.5 flex items-center justify-between gap-3">
+
+            <div className="min-w-0">
+
+              <div className="text-[10px] font-extrabold tracking-wide text-[#2563EB]">
+                {selectedWeek}주차 OPEN 미션
+              </div>
+
+
+              <div className="text-base font-extrabold text-[#172033] mt-0.5">
+                {selectedMission.title}
+              </div>
+
+
+              <div className="text-xs text-[#64748B] mt-1">
+                {selectedMission.description}
+              </div>
+
+            </div>
+
+
+            <div className="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center shrink-0">
+
+              <CheckCircle2 className="w-5 h-5" />
+
+            </div>
+
+          </div>
+
+        )}
 
 
         {/* Error */}
@@ -420,6 +534,7 @@ export const MissionManagement:
           <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2 text-xs font-semibold text-rose-800">
 
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+
 
             <span>
               {errorMsg}
@@ -437,6 +552,7 @@ export const MissionManagement:
 
             <Check className="w-4 h-4 text-emerald-600 shrink-0" />
 
+
             <span>
               {toastMessage}
             </span>
@@ -447,17 +563,28 @@ export const MissionManagement:
 
 
         {/* Missions */}
-        <div className="space-y-2">
+        <div className="space-y-3">
 
           <div className="flex flex-wrap items-center justify-between gap-2">
 
-            <div className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
-              활성화할 미션 선택
+            <div>
+
+              <div className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                이번 주 OPEN 미션
+              </div>
+
+
+              <div className="text-[11px] text-[#94A3B8] mt-0.5">
+                선택한 미션 1개만 사용자 화면에서 잠금 해제됩니다.
+              </div>
+
             </div>
 
-            <div className="text-xs font-bold text-[#2563EB]">
-              {activeMissions.length} /{" "}
-              {MISSIONS.length}개 선택
+
+            <div className="text-xs font-extrabold px-2.5 py-1 rounded-full border bg-[#EAF2FF] border-blue-200 text-[#2563EB]">
+
+              1개 선택
+
             </div>
 
           </div>
@@ -466,12 +593,13 @@ export const MissionManagement:
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
 
             {MISSIONS.map(
-              (mission) => {
+              (
+                mission
+              ) => {
 
                 const isChecked =
-                  activeMissions.includes(
-                    mission.id
-                  );
+                  selectedMissionId ===
+                  mission.id;
 
 
                 return (
@@ -479,63 +607,83 @@ export const MissionManagement:
                     key={
                       mission.id
                     }
+
                     type="button"
+
                     disabled={
                       isSaving
                     }
+
                     aria-pressed={
                       isChecked
                     }
+
                     onClick={() =>
-                      toggleMission(
+                      selectMission(
                         mission.id
                       )
                     }
-                    className={`w-full p-3 rounded-xl border flex items-center gap-3 cursor-pointer transition-all text-left disabled:opacity-60 ${
+
+                    className={`w-full p-3.5 rounded-xl border flex items-start gap-3 transition-all text-left disabled:opacity-60 ${
                       isChecked
-                        ? "bg-[#EAF2FF] border-[#2563EB] text-[#172033]"
-                        : "bg-white border-[#D9E2EC] text-slate-500 hover:border-slate-300"
+                        ? "bg-[#EAF2FF] border-[#2563EB] shadow-xs cursor-pointer"
+                        : "bg-white border-[#D9E2EC] hover:border-blue-300 hover:bg-slate-50 cursor-pointer"
                     }`}
                   >
 
-                    {/* Checkbox */}
-                    <div
-                      className={`w-5 h-5 rounded flex items-center justify-center shrink-0 border transition-colors ${
-                        isChecked
-                          ? "bg-[#2563EB] border-[#2563EB] text-white"
-                          : "border-slate-300 bg-white"
-                      }`}
-                    >
+                    {/* Radio */}
+                    <div className="w-6 h-6 shrink-0 flex items-center justify-center mt-0.5">
 
-                      {isChecked && (
+                      {isChecked ? (
 
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        <CheckCircle2 className="w-6 h-6 text-[#2563EB]" />
+
+                      ) : (
+
+                        <Circle className="w-6 h-6 text-slate-300" />
 
                       )}
 
                     </div>
 
 
-                    <div className="min-w-0">
+                    {/* Mission */}
+                    <div className="min-w-0 flex-1">
 
                       <div
-                        className={`text-xs font-bold ${
+                        className={`text-[10px] font-extrabold tracking-wide ${
                           isChecked
                             ? "text-[#2563EB]"
-                            : "text-[#64748B]"
+                            : "text-[#94A3B8]"
                         }`}
                       >
-                        {mission.id} 미션
+                        {mission.id}
                       </div>
 
-                      <div className="text-sm font-extrabold text-[#172033] leading-snug">
+
+                      <div className="text-sm sm:text-base font-extrabold text-[#172033] leading-snug mt-0.5">
                         {mission.title}
+                      </div>
+
+
+                      <div className="text-xs text-[#64748B] leading-relaxed mt-1 break-keep">
+                        {mission.description}
                       </div>
 
                     </div>
 
+
+                    {isChecked && (
+
+                      <span className="text-[10px] font-bold text-[#2563EB] shrink-0">
+                        OPEN
+                      </span>
+
+                    )}
+
                   </button>
                 );
+
               }
             )}
 
@@ -546,8 +694,11 @@ export const MissionManagement:
 
         {/* 안내 */}
         <div className="text-[11px] sm:text-xs text-[#64748B] leading-relaxed bg-slate-50 border border-slate-200 rounded-xl p-3">
-          저장된 주차와 활성 미션은 사용자 화면에 즉시 반영됩니다.
-          최소 1개 이상의 미션은 반드시 활성화되어 있어야 합니다.
+
+          주차별로 미션 1개만 공개할 수 있습니다.
+          다른 미션을 선택하면 기존 미션은 자동으로 해제됩니다.
+          저장 후 사용자 화면의 「정보보호 미션 마을」에서 선택한 미션만 OPEN 상태로 표시됩니다.
+
         </div>
 
       </div>

@@ -55,18 +55,17 @@ import {
   Send,
   Calendar,
   CheckCircle2,
-  Clock3
+  Clock3,
+  Info,
+  Camera,
+  AlertTriangle
 } from "lucide-react";
 
 
 /**
- * 동일 브라우저 식별값 생성
- *
- * 실제 기기 고유정보를 수집하는 것이 아니라
- * localStorage에 임의 UUID를 저장
+ * 브라우저별 식별값
  */
-function getOrCreateDeviceId():
-string {
+function getOrCreateDeviceId(): string {
 
   const storageKey =
     "securityMissionDeviceId";
@@ -78,14 +77,14 @@ string {
   ) {
 
     return "";
+
   }
 
 
   let deviceId =
-    window.localStorage
-      .getItem(
-        storageKey
-      );
+    window.localStorage.getItem(
+      storageKey
+    );
 
 
   if (!deviceId) {
@@ -110,11 +109,11 @@ string {
     }
 
 
-    window.localStorage
-      .setItem(
-        storageKey,
-        deviceId
-      );
+    window.localStorage.setItem(
+      storageKey,
+      deviceId
+    );
+
   }
 
 
@@ -125,8 +124,11 @@ string {
 export default function App() {
 
   /**
+   * =====================================
    * Navigation
+   * =====================================
    */
+
   const [
     view,
     setView
@@ -160,17 +162,23 @@ export default function App() {
         ) {
 
           return "admin-login";
+
         }
+
       }
 
 
       return "form";
+
     });
 
 
   /**
-   * Device ID
+   * =====================================
+   * Device
+   * =====================================
    */
+
   const [
     deviceId
   ] =
@@ -181,8 +189,11 @@ export default function App() {
 
 
   /**
-   * 미션 운영 설정
+   * =====================================
+   * Mission settings
+   * =====================================
    */
+
   const [
     currentWeek,
     setCurrentWeek
@@ -197,10 +208,7 @@ export default function App() {
     setActiveMissions
   ] =
     useState<string[]>(
-      MISSIONS.map(
-        (mission) =>
-          mission.id
-      )
+      []
     );
 
 
@@ -214,10 +222,23 @@ export default function App() {
 
 
   /**
-   * 하루 참여 상태
-   *
-   * 기기당 하루 1회
+   * 봉투 공개 여부
    */
+  const [
+    isMissionRevealed,
+    setIsMissionRevealed
+  ] =
+    useState(
+      false
+    );
+
+
+  /**
+   * =====================================
+   * Daily status
+   * =====================================
+   */
+
   const [
     dailyStatus,
     setDailyStatus
@@ -241,8 +262,11 @@ export default function App() {
 
 
   /**
-   * 사용자 Form
+   * =====================================
+   * Form
+   * =====================================
    */
+
   const [
     selectedMission,
     setSelectedMission
@@ -289,8 +313,11 @@ export default function App() {
 
 
   /**
+   * =====================================
    * Submit
+   * =====================================
    */
+
   const [
     isSubmitting,
     setIsSubmitting
@@ -310,8 +337,11 @@ export default function App() {
 
 
   /**
+   * =====================================
    * Admin
+   * =====================================
    */
+
   const [
     adminPassword,
     setAdminPassword
@@ -333,8 +363,11 @@ export default function App() {
 
 
   /**
-   * 미션 운영 설정 조회
+   * =====================================
+   * Mission settings 조회
+   * =====================================
    */
+
   const loadMissionSettings =
     useCallback(
       async () => {
@@ -364,8 +397,16 @@ export default function App() {
               );
 
 
+            /**
+             * 한 주에 미션 1개만 사용
+             */
             const active =
-              settings.activeMissions;
+              settings.activeMissions.length >
+              0
+                ? [
+                    settings.activeMissions[0]
+                  ]
+                : [];
 
 
             setCurrentWeek(
@@ -379,8 +420,8 @@ export default function App() {
 
 
             /**
-             * 기존 선택 미션이
-             * 비활성화되었다면 선택 해제
+             * 관리자가 활성 미션을 바꾼 경우
+             * 기존에 열어둔 봉투/선택 상태 초기화
              */
             setSelectedMission(
               (
@@ -394,17 +435,32 @@ export default function App() {
                   )
                 ) {
 
+                  setIsMissionRevealed(
+                    false
+                  );
+
+
+                  setDescription(
+                    ""
+                  );
+
+
                   return null;
+
                 }
 
 
                 return previous;
+
               }
             );
+
           }
 
 
-        } catch (error) {
+        } catch (
+          error
+        ) {
 
           console.error(
             "Mission settings error:",
@@ -419,14 +475,18 @@ export default function App() {
           );
 
         }
+
       },
       []
     );
 
 
   /**
-   * 오늘 참여 상태 조회
+   * =====================================
+   * Daily status 조회
+   * =====================================
    */
+
   const loadDailyStatus =
     useCallback(
       async () => {
@@ -434,6 +494,7 @@ export default function App() {
         if (!deviceId) {
 
           return;
+
         }
 
 
@@ -455,7 +516,9 @@ export default function App() {
           );
 
 
-        } catch (error) {
+        } catch (
+          error
+        ) {
 
           console.error(
             "Daily submission status error:",
@@ -470,6 +533,7 @@ export default function App() {
           );
 
         }
+
       },
       [
         deviceId
@@ -478,9 +542,11 @@ export default function App() {
 
 
   /**
-   * 사용자 화면 진입 시
-   * 최신 설정 + 참여 상태 조회
+   * =====================================
+   * 사용자 화면 진입
+   * =====================================
    */
+
   useEffect(
     () => {
 
@@ -505,8 +571,11 @@ export default function App() {
 
 
   /**
-   * Browser 뒤로가기
+   * =====================================
+   * Browser history
+   * =====================================
    */
+
   useEffect(
     () => {
 
@@ -535,20 +604,23 @@ export default function App() {
                 "admin-login"
               );
 
+            } else {
+
+              setView(
+                "admin-dashboard"
+              );
+
             }
 
-          } else if (
-            view ===
-              "admin-login" ||
-            view ===
-              "admin-dashboard"
-          ) {
+
+          } else {
 
             setView(
               "form"
             );
 
           }
+
         };
 
 
@@ -566,40 +638,56 @@ export default function App() {
 
     },
     [
-      adminData,
-      view
+      adminData
     ]
   );
 
 
   /**
-   * 활성 미션만 사용자에게 표시
+   * =====================================
+   * 이번 주 OPEN 미션
+   * =====================================
    */
-  const visibleMissions =
-    MISSIONS.filter(
-      (
-        mission
-      ) =>
-        activeMissions.includes(
-          mission.id
-        )
-    );
+
+  const activeMissionId =
+    activeMissions.length >
+      0
+      ? activeMissions[0]
+      : null;
+
+
+  const activeMission =
+    activeMissionId
+      ? MISSIONS.find(
+          (
+            mission
+          ) =>
+            mission.id ===
+            activeMissionId
+        ) ?? null
+      : null;
 
 
   /**
-   * M05 설명 필수
+   * =====================================
+   * 자랑하GO M14 설명 필수
+   * =====================================
    */
+
   const isDescriptionValid =
     selectedMission?.id !==
-      "M05" ||
+      "M14" ||
     Boolean(
       description.trim()
     );
 
 
   /**
-   * Form 유효성
+   * =====================================
+   * Form valid
+   * =====================================
    */
+
   const isFormValid =
     Boolean(
       selectedMission
@@ -618,8 +706,75 @@ export default function App() {
 
 
   /**
-   * 미션 제출
+   * =====================================
+   * 봉투 열기
+   * =====================================
    */
+
+  const handleRevealMission =
+    () => {
+
+      if (
+        !activeMission ||
+        !dailyStatus.canSubmit
+      ) {
+
+        return;
+
+      }
+
+
+      setIsMissionRevealed(
+        true
+      );
+
+    };
+
+
+  /**
+   * =====================================
+   * 미션 참여 선택
+   * =====================================
+   */
+
+  const handleMissionSelect =
+    (
+      mission: Mission
+    ) => {
+
+      if (
+        mission.id !==
+        activeMissionId
+      ) {
+
+        return;
+
+      }
+
+
+      setSelectedMission(
+        mission
+      );
+
+
+      setDescription(
+        ""
+      );
+
+
+      setSubmitError(
+        null
+      );
+
+    };
+
+
+  /**
+   * =====================================
+   * Submit
+   * =====================================
+   */
+
   const handleSubmit =
     async (
       event:
@@ -629,9 +784,6 @@ export default function App() {
       event.preventDefault();
 
 
-      /**
-       * 하루 1회 제한
-       */
       if (
         !dailyStatus.canSubmit
       ) {
@@ -640,7 +792,25 @@ export default function App() {
           "오늘 참여를 이미 완료했습니다. 내일 다시 참여해주세요."
         );
 
+
         return;
+
+      }
+
+
+      if (
+        selectedMission?.id ===
+          "M14" &&
+        !description.trim()
+      ) {
+
+        setSubmitError(
+          "우리 팀의 정보보호 활동 내용을 간단히 입력해주세요."
+        );
+
+
+        return;
+
       }
 
 
@@ -652,6 +822,25 @@ export default function App() {
       ) {
 
         return;
+
+      }
+
+
+      /**
+       * 프론트에서도 현재 미션 재검증
+       */
+      if (
+        selectedMission.id !==
+        activeMissionId
+      ) {
+
+        setSubmitError(
+          "현재 참여할 수 없는 미션입니다. 화면을 새로고침해주세요."
+        );
+
+
+        return;
+
       }
 
 
@@ -668,8 +857,7 @@ export default function App() {
 
 
         /**
-         * 제출 직전 서버에서
-         * 하루 참여 여부 재확인
+         * 제출 직전 하루 참여 여부 재검증
          */
         const latestStatus =
           await fetchDailySubmissionStatusApi(
@@ -689,11 +877,16 @@ export default function App() {
           throw new Error(
             "오늘 참여를 이미 완료했습니다. 내일 다시 참여해주세요."
           );
+
         }
 
 
+        /**
+         * 제출
+         */
         const response =
           await submitMissionApi({
+
             missionId:
               selectedMission.id,
 
@@ -709,14 +902,13 @@ export default function App() {
             description:
               description.trim(),
 
-            imageData:
-              imageData,
+            imageData,
 
             imageMimeType:
               "image/jpeg",
 
-            deviceId:
-              deviceId
+            deviceId
+
           });
 
 
@@ -726,9 +918,6 @@ export default function App() {
             false
         ) {
 
-          /**
-           * 제출 성공 후 서버 상태 갱신
-           */
           try {
 
             const newStatus =
@@ -752,10 +941,6 @@ export default function App() {
             );
 
 
-            /**
-             * 서버 제출 자체는 성공했으므로
-             * 화면에서도 참여 완료 상태로 보정
-             */
             setDailyStatus({
               success: true,
               count: 1,
@@ -765,6 +950,7 @@ export default function App() {
               message:
                 "오늘 참여를 완료했습니다."
             });
+
           }
 
 
@@ -783,7 +969,9 @@ export default function App() {
         }
 
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           "Mission submission failed:",
@@ -801,10 +989,6 @@ export default function App() {
           );
 
 
-          /**
-           * 서버에서 하루 1회 제한 오류가 온 경우
-           * 화면 상태도 즉시 막음
-           */
           if (
             error.message.includes(
               "오늘 참여"
@@ -840,16 +1024,16 @@ export default function App() {
         );
 
       }
+
     };
 
 
   /**
-   * 성공 화면에서 사용자 화면으로 돌아가기
-   *
-   * 하루 1회 정책이므로
-   * 다시 입력할 수 있는 상태가 아니라
-   * 참여 완료 안내 화면으로 복귀
+   * =====================================
+   * 성공 → 처음
+   * =====================================
    */
+
   const handleReset =
     () => {
 
@@ -857,25 +1041,36 @@ export default function App() {
         null
       );
 
+
       setDepartment(
         ""
       );
+
 
       setName(
         ""
       );
 
+
       setDescription(
         ""
       );
+
 
       setImageData(
         null
       );
 
+
       setSubmitError(
         null
       );
+
+
+      setIsMissionRevealed(
+        false
+      );
+
 
       setView(
         "form"
@@ -885,8 +1080,11 @@ export default function App() {
 
 
   /**
-   * 관리자 이동
+   * =====================================
+   * Admin
+   * =====================================
    */
+
   const navigateToAdmin =
     () => {
 
@@ -914,6 +1112,7 @@ export default function App() {
           "admin-dashboard"
         );
 
+
       } else {
 
         setView(
@@ -921,12 +1120,10 @@ export default function App() {
         );
 
       }
+
     };
 
 
-  /**
-   * 사용자 화면 이동
-   */
   const navigateToUser =
     () => {
 
@@ -952,9 +1149,6 @@ export default function App() {
     };
 
 
-  /**
-   * 관리자 로그아웃
-   */
   const handleAdminLogout =
     () => {
 
@@ -991,15 +1185,18 @@ export default function App() {
 
 
   /**
-   * 관리자 Login
+   * =====================================
+   * Admin login
+   * =====================================
    */
+
   if (
     view ===
     "admin-login"
   ) {
 
     return (
-      <div className="min-h-screen bg-[#F5F8FC] py-6 px-4 font-sans">
+      <div className="min-h-screen bg-[#F5F8FC] px-3 py-5 sm:px-4 sm:py-6 font-sans">
 
         <AdminLogin
           onSuccess={(
@@ -1030,12 +1227,16 @@ export default function App() {
 
       </div>
     );
+
   }
 
 
   /**
-   * 관리자 Dashboard
+   * =====================================
+   * Admin dashboard
+   * =====================================
    */
+
   if (
     view ===
       "admin-dashboard" &&
@@ -1043,7 +1244,7 @@ export default function App() {
   ) {
 
     return (
-      <div className="min-h-screen bg-[#F5F8FC] py-6 px-4 font-sans">
+      <div className="min-h-screen bg-[#F5F8FC] px-3 py-5 sm:px-4 sm:py-6 font-sans">
 
         <AdminDashboard
           adminPassword={
@@ -1065,16 +1266,32 @@ export default function App() {
 
       </div>
     );
+
   }
 
 
   /**
-   * 사용자 화면
+   * =====================================
+   * User
+   * =====================================
    */
-  return (
-    <div className="min-h-screen bg-[#F5F8FC] text-[#172033] flex flex-col justify-between font-sans">
 
-      <main className="w-full max-w-2xl mx-auto px-4 py-5 sm:py-8 space-y-5">
+  return (
+    <div className="min-h-screen bg-[#F5F8FC] text-[#172033] flex flex-col font-sans">
+
+      <main
+        className="
+          w-full
+          max-w-2xl
+          mx-auto
+          px-3
+          sm:px-4
+          lg:px-5
+          py-4
+          sm:py-8
+          flex-1
+        "
+      >
 
         {view ===
           "success" &&
@@ -1104,7 +1321,7 @@ export default function App() {
             onSubmit={
               handleSubmit
             }
-            className="space-y-5 pb-24"
+            className="space-y-4 sm:space-y-5 pb-24 sm:pb-28"
           >
 
             {/* Header */}
@@ -1115,18 +1332,20 @@ export default function App() {
             />
 
 
-            {/* 오늘 참여 상태 */}
+            {/* =====================================
+                참여 상태
+            ====================================== */}
             {!isLoadingDailyStatus && (
 
               <div
                 className={
                   dailyStatus.canSubmit
-                    ? "bg-white border border-[#D9E2EC] rounded-2xl px-4 py-3 flex items-center justify-between gap-3"
-                    : "bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 flex items-center gap-3"
+                    ? "bg-white border border-[#D9E2EC] rounded-2xl px-3.5 sm:px-4 py-3 flex items-center justify-between gap-3"
+                    : "bg-emerald-50 border border-emerald-200 rounded-2xl px-3.5 sm:px-4 py-3 flex items-center gap-3"
                 }
               >
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
 
                   {dailyStatus.canSubmit ? (
 
@@ -1139,7 +1358,7 @@ export default function App() {
                   )}
 
 
-                  <span className="text-xs sm:text-sm font-semibold text-[#475569]">
+                  <span className="text-xs sm:text-sm font-semibold text-[#475569] truncate">
 
                     {dailyStatus.canSubmit
                       ? "오늘 1회 참여할 수 있어요."
@@ -1152,10 +1371,8 @@ export default function App() {
 
                 {dailyStatus.canSubmit && (
 
-                  <span className="text-xs font-bold text-[#2563EB] whitespace-nowrap">
-
+                  <span className="text-[11px] sm:text-xs font-bold text-[#2563EB] whitespace-nowrap">
                     1회 가능
-
                   </span>
 
                 )}
@@ -1165,72 +1382,106 @@ export default function App() {
             )}
 
 
-            {/* 이미 참여 완료 */}
-            {!isLoadingDailyStatus &&
-              !dailyStatus.canSubmit && (
-
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-sm text-emerald-900">
-
-                <div className="flex items-start gap-2">
-
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-
-                  <div className="space-y-1">
-
-                    <div className="font-bold">
-                      오늘 참여가 완료되었습니다.
-                    </div>
-
-                    <div className="text-xs sm:text-sm text-emerald-800">
-                      정보보호 미션은 한 기기에서 하루 1회 참여할 수 있습니다.
-                      내일 다시 참여해주세요.
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            )}
-
-
-            {/* Section 1 */}
+            {/* =====================================
+                이번 주 미션
+            ====================================== */}
             <section
-              className={`bg-white border border-[#D9E2EC] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4 ${
-                !dailyStatus.canSubmit
-                  ? "opacity-60 pointer-events-none"
-                  : ""
-              }`}
+              className={`
+                bg-white
+                border
+                border-[#D9E2EC]
+                rounded-2xl
+                sm:rounded-3xl
+                p-3
+                sm:p-6
+                shadow-xs
+                space-y-4
+                sm:space-y-5
+                ${
+                  !dailyStatus.canSubmit
+                    ? "opacity-60 pointer-events-none"
+                    : ""
+                }
+              `}
             >
 
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              {/* Section Header */}
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-2
+                  sm:gap-3
+                  border-b
+                  border-slate-100
+                  pb-3
+                "
+              >
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
 
-                  <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white font-black text-xs flex items-center justify-center shrink-0">
+                  <span
+                    className="
+                      w-6
+                      h-6
+                      rounded-full
+                      bg-[#2563EB]
+                      text-white
+                      font-black
+                      text-xs
+                      flex
+                      items-center
+                      justify-center
+                      shrink-0
+                    "
+                  >
                     1
                   </span>
 
-                  <h2 className="text-base sm:text-lg font-extrabold text-[#172033]">
 
-                    미션 선택{" "}
-
-                    <span className="text-red-500">
-                      *
-                    </span>
-
+                  <h2
+                    className="
+                      text-sm
+                      min-[380px]:text-base
+                      sm:text-lg
+                      font-extrabold
+                      text-[#172033]
+                      leading-tight
+                      break-keep
+                    "
+                  >
+                    이번 주 정보보호 미션
                   </h2>
 
                 </div>
 
 
-                <div className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#EAF2FF] text-[#2563EB] text-xs font-bold rounded-full border border-blue-200">
+                <div
+                  className="
+                    inline-flex
+                    items-center
+                    gap-1
+                    px-2
+                    sm:px-2.5
+                    py-1
+                    bg-[#EAF2FF]
+                    text-[#2563EB]
+                    text-[10px]
+                    sm:text-xs
+                    font-bold
+                    rounded-full
+                    border
+                    border-blue-200
+                    whitespace-nowrap
+                    shrink-0
+                  "
+                >
 
-                  <Calendar className="w-3.5 h-3.5" />
+                  <Calendar className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
 
                   <span>
-                    {currentWeek}주차 미션
+                    {currentWeek}주차
                   </span>
 
                 </div>
@@ -1238,55 +1489,237 @@ export default function App() {
               </div>
 
 
-              <div className="text-xs sm:text-sm text-[#64748B] font-medium">
-                이번 주 정보보호 미션을 선택해주세요.
-              </div>
+              {/* 미션 영역 */}
+              <div className="w-full flex justify-center">
+
+                <div
+                  className="
+                    w-full
+                    max-w-[430px]
+                    mx-auto
+                  "
+                >
+
+                  {isLoadingSettings ? (
+
+                    <div
+                      className="
+                        w-full
+                        min-h-[260px]
+                        sm:min-h-[285px]
+                        bg-slate-100
+                        animate-pulse
+                        rounded-[24px]
+                        sm:rounded-[28px]
+                      "
+                    />
+
+                  ) : !activeMission ? (
+
+                    <div
+                      className="
+                        w-full
+                        py-10
+                        sm:py-12
+                        px-4
+                        text-center
+                        bg-slate-50
+                        border
+                        border-dashed
+                        border-slate-300
+                        rounded-2xl
+                      "
+                    >
+
+                      <AlertCircle className="w-6 h-6 text-slate-400 mx-auto mb-2" />
 
 
-              {isLoadingSettings ? (
+                      <div className="text-sm font-bold text-slate-500">
+                        현재 공개된 미션이 없습니다.
+                      </div>
 
-                <div className="space-y-3 py-2">
+                    </div>
 
-                  <div className="h-24 bg-slate-100 animate-pulse rounded-2xl" />
+                  ) : (
 
-                  <div className="h-24 bg-slate-100 animate-pulse rounded-2xl" />
+                    <MissionCard
+                      mission={
+                        activeMission
+                      }
+
+                      isRevealed={
+                        isMissionRevealed
+                      }
+
+                      isSelected={
+                        selectedMission?.id ===
+                        activeMission.id
+                      }
+
+                      onReveal={
+                        handleRevealMission
+                      }
+
+                      onSelect={
+                        handleMissionSelect
+                      }
+                    />
+
+                  )}
 
                 </div>
 
-              ) : (
+              </div>
 
-                <div className="space-y-3">
 
-                  {visibleMissions.map(
-                    (
-                      mission
-                    ) => (
+              {/* =====================================
+                  미션 상세
+              ====================================== */}
+              {selectedMission && (
 
-                      <MissionCard
-                        key={
-                          mission.id
-                        }
+                <div
+                  className="
+                    w-full
+                    max-w-[520px]
+                    mx-auto
+                    space-y-3
+                    pt-1
+                    animate-in
+                    fade-in
+                    slide-in-from-top-1
+                    duration-300
+                  "
+                >
 
-                        mission={
-                          mission
-                        }
+                  {/* 수행 방법 */}
+                  <div
+                    className="
+                      bg-[#EAF2FF]/60
+                      border
+                      border-blue-100
+                      rounded-xl
+                      sm:rounded-2xl
+                      p-3
+                      sm:p-3.5
+                      flex
+                      items-start
+                      gap-3
+                    "
+                  >
 
-                        isSelected={
-                          selectedMission?.id ===
-                          mission.id
-                        }
+                    <div
+                      className="
+                        w-8
+                        h-8
+                        rounded-xl
+                        bg-white
+                        text-[#2563EB]
+                        flex
+                        items-center
+                        justify-center
+                        shrink-0
+                        border
+                        border-blue-100
+                      "
+                    >
 
-                        onSelect={(
-                          selected
-                        ) =>
-                          setSelectedMission(
-                            selected
-                          )
-                        }
-                      />
+                      <Info className="w-4 h-4" />
 
-                    )
-                  )}
+                    </div>
+
+
+                    <div className="min-w-0">
+
+                      <div className="text-xs font-extrabold text-[#1E3A5F]">
+                        수행 방법
+                      </div>
+
+
+                      <p className="mt-1 text-xs sm:text-sm text-[#334155] leading-relaxed font-medium break-keep">
+                        {selectedMission.guide}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* 인증 방법 */}
+                  <div
+                    className="
+                      bg-white
+                      border
+                      border-[#D9E2EC]
+                      rounded-xl
+                      sm:rounded-2xl
+                      p-3
+                      sm:p-3.5
+                      flex
+                      items-start
+                      gap-3
+                    "
+                  >
+
+                    <div
+                      className="
+                        w-8
+                        h-8
+                        rounded-xl
+                        bg-[#EAF2FF]
+                        text-[#2563EB]
+                        flex
+                        items-center
+                        justify-center
+                        shrink-0
+                      "
+                    >
+
+                      <Camera className="w-4 h-4" />
+
+                    </div>
+
+
+                    <div className="min-w-0">
+
+                      <div className="text-xs font-extrabold text-[#1E3A5F]">
+                        인증 방법
+                      </div>
+
+
+                      <p className="mt-1 text-xs sm:text-sm text-[#334155] leading-relaxed font-medium break-keep">
+                        {selectedMission.verificationGuide}
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  {/* 개인정보 */}
+                  <div
+                    className="
+                      bg-amber-50
+                      border
+                      border-amber-200
+                      rounded-xl
+                      p-3
+                      flex
+                      items-start
+                      gap-2
+                    "
+                  >
+
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+
+
+                    <p className="text-[11px] sm:text-xs text-amber-900 leading-relaxed font-medium break-keep">
+
+                      인증사진에 환자 이름, 등록번호, 의무기록,
+                      비밀번호 등 개인정보가 보이지 않는지 반드시 확인해주세요.
+
+                    </p>
+
+                  </div>
 
                 </div>
 
@@ -1295,13 +1728,25 @@ export default function App() {
             </section>
 
 
-            {/* Section 2 */}
+            {/* =====================================
+                부서
+            ====================================== */}
             <section
-              className={`bg-white border border-[#D9E2EC] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4 ${
-                !dailyStatus.canSubmit
-                  ? "opacity-60 pointer-events-none"
-                  : ""
-              }`}
+              className={`
+                bg-white
+                border
+                border-[#D9E2EC]
+                rounded-2xl
+                sm:rounded-3xl
+                p-4
+                sm:p-6
+                space-y-4
+                ${
+                  !dailyStatus.canSubmit
+                    ? "opacity-60 pointer-events-none"
+                    : ""
+                }
+              `}
             >
 
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1310,8 +1755,15 @@ export default function App() {
                   2
                 </span>
 
-                <h2 className="text-base sm:text-lg font-extrabold text-[#172033]">
-                  부서 선택
+
+                <h2 className="text-sm sm:text-base font-extrabold text-[#172033]">
+
+                  부서 선택{" "}
+
+                  <span className="text-red-500">
+                    *
+                  </span>
+
                 </h2>
 
               </div>
@@ -1322,25 +1774,33 @@ export default function App() {
                   department
                 }
 
-                onChange={(
-                  selectedDepartment
-                ) =>
-                  setDepartment(
-                    selectedDepartment
-                  )
+                onChange={
+                  setDepartment
                 }
               />
 
             </section>
 
 
-            {/* Section 3 */}
+            {/* =====================================
+                참여자
+            ====================================== */}
             <section
-              className={`bg-white border border-[#D9E2EC] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4 ${
-                !dailyStatus.canSubmit
-                  ? "opacity-60 pointer-events-none"
-                  : ""
-              }`}
+              className={`
+                bg-white
+                border
+                border-[#D9E2EC]
+                rounded-2xl
+                sm:rounded-3xl
+                p-4
+                sm:p-6
+                space-y-4
+                ${
+                  !dailyStatus.canSubmit
+                    ? "opacity-60 pointer-events-none"
+                    : ""
+                }
+              `}
             >
 
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1349,7 +1809,8 @@ export default function App() {
                   3
                 </span>
 
-                <h2 className="text-base sm:text-lg font-extrabold text-[#172033]">
+
+                <h2 className="text-sm sm:text-base font-extrabold text-[#172033]">
                   참여자 정보
                 </h2>
 
@@ -1361,42 +1822,46 @@ export default function App() {
                   name
                 }
 
-                onChangeName={(
-                  value
-                ) =>
-                  setName(
-                    value
-                  )
+                onChangeName={
+                  setName
                 }
 
                 description={
                   description
                 }
 
-                onChangeDescription={(
-                  value
-                ) =>
-                  setDescription(
-                    value
-                  )
+                onChangeDescription={
+                  setDescription
                 }
 
                 isMission05={
                   selectedMission?.id ===
-                  "M05"
+                  "M14"
                 }
               />
 
             </section>
 
 
-            {/* Section 4 */}
+            {/* =====================================
+                사진
+            ====================================== */}
             <section
-              className={`bg-white border border-[#D9E2EC] rounded-3xl p-4 sm:p-6 shadow-xs space-y-4 ${
-                !dailyStatus.canSubmit
-                  ? "opacity-60 pointer-events-none"
-                  : ""
-              }`}
+              className={`
+                bg-white
+                border
+                border-[#D9E2EC]
+                rounded-2xl
+                sm:rounded-3xl
+                p-4
+                sm:p-6
+                space-y-4
+                ${
+                  !dailyStatus.canSubmit
+                    ? "opacity-60 pointer-events-none"
+                    : ""
+                }
+              `}
             >
 
               <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -1405,8 +1870,15 @@ export default function App() {
                   4
                 </span>
 
-                <h2 className="text-base sm:text-lg font-extrabold text-[#172033]">
-                  인증사진 촬영 및 등록
+
+                <h2 className="text-sm sm:text-base font-extrabold text-[#172033]">
+
+                  인증사진 촬영 및 등록{" "}
+
+                  <span className="text-red-500">
+                    *
+                  </span>
+
                 </h2>
 
               </div>
@@ -1417,26 +1889,39 @@ export default function App() {
                   imageData
                 }
 
-                onImageSelected={(
-                  image
-                ) =>
-                  setImageData(
-                    image
-                  )
+                onImageSelected={
+                  setImageData
                 }
               />
 
             </section>
 
 
-            {/* 제출 Error */}
+            {/* Error */}
             {submitError && (
 
-              <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-sm font-semibold text-rose-900">
+              <div
+                className="
+                  p-3.5
+                  sm:p-4
+                  bg-rose-50
+                  border
+                  border-rose-200
+                  rounded-2xl
+                  flex
+                  items-start
+                  gap-2
+                  text-xs
+                  sm:text-sm
+                  font-semibold
+                  text-rose-900
+                "
+              >
 
-                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
 
-                <span>
+
+                <span className="leading-relaxed">
                   {submitError}
                 </span>
 
@@ -1445,10 +1930,29 @@ export default function App() {
             )}
 
 
-            {/* Sticky Submit */}
-            <div className="fixed bottom-0 left-0 right-0 p-3.5 sm:p-4 bg-white/90 backdrop-blur-md border-t border-[#D9E2EC] z-40 shadow-lg">
+            {/* =====================================
+                Sticky submit
+            ====================================== */}
+            <div
+              className="
+                fixed
+                bottom-0
+                left-0
+                right-0
+                z-40
+                bg-white/95
+                backdrop-blur-md
+                border-t
+                border-[#D9E2EC]
+                px-3
+                sm:px-4
+                pt-3
+                pb-[calc(0.75rem+env(safe-area-inset-bottom))]
+                shadow-[0_-4px_18px_rgba(15,23,42,0.08)]
+              "
+            >
 
-              <div className="max-w-2xl mx-auto">
+              <div className="w-full max-w-2xl mx-auto">
 
                 <button
                   type="submit"
@@ -1459,16 +1963,39 @@ export default function App() {
                     !dailyStatus.canSubmit
                   }
 
-                  className="w-full h-12 sm:h-14 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-2xl font-bold text-base sm:text-lg flex items-center justify-center gap-2.5 shadow-md disabled:opacity-40 disabled:pointer-events-none active:scale-[0.99] transition-all cursor-pointer"
+                  className="
+                    w-full
+                    min-h-12
+                    sm:min-h-14
+                    px-4
+                    bg-[#2563EB]
+                    hover:bg-[#1D4ED8]
+                    text-white
+                    rounded-xl
+                    sm:rounded-2xl
+                    font-bold
+                    text-sm
+                    sm:text-base
+                    flex
+                    items-center
+                    justify-center
+                    gap-2
+                    shadow-md
+                    disabled:opacity-40
+                    disabled:pointer-events-none
+                    active:scale-[0.99]
+                    transition-all
+                    cursor-pointer
+                  "
                 >
 
                   {isSubmitting ? (
 
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin text-blue-200" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
 
                       <span>
-                        미션을 등록하고 있습니다...
+                        등록 중...
                       </span>
                     </>
 
@@ -1479,6 +2006,26 @@ export default function App() {
 
                       <span>
                         오늘 참여 완료
+                      </span>
+                    </>
+
+                  ) : !isMissionRevealed ? (
+
+                    <>
+                      <Send className="w-5 h-5" />
+
+                      <span>
+                        먼저 미션 봉투를 열어주세요
+                      </span>
+                    </>
+
+                  ) : !selectedMission ? (
+
+                    <>
+                      <Send className="w-5 h-5" />
+
+                      <span>
+                        미션 참여하기를 눌러주세요
                       </span>
                     </>
 
@@ -1508,38 +2055,37 @@ export default function App() {
 
 
       {/* Footer */}
-      <footer className="w-full border-t border-[#D9E2EC] py-6 px-4 bg-white text-center text-xs text-[#64748B] space-y-1.5">
+      <footer
+        className="
+          w-full
+          border-t
+          border-[#D9E2EC]
+          py-5
+          sm:py-6
+          px-4
+          bg-white
+          text-center
+          text-xs
+          text-[#64748B]
+        "
+      >
 
-        <p className="font-semibold text-[#172033]">
+        <div className="font-semibold text-[#172033]">
           2026 정보보호 미션 챌린지
-        </p>
+        </div>
 
 
-        <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#64748B]">
+        <button
+          type="button"
 
-          <span>
-            개인정보 안내
-          </span>
+          onClick={
+            navigateToAdmin
+          }
 
-
-          <span
-            aria-hidden="true"
-          >
-            ·
-          </span>
-
-
-          <button
-            type="button"
-            onClick={
-              navigateToAdmin
-            }
-            className="text-[#64748B] hover:text-[#2563EB] underline underline-offset-2 transition-colors cursor-pointer"
-          >
-            관리자
-          </button>
-
-        </p>
+          className="mt-1 text-[11px] underline underline-offset-2 hover:text-[#2563EB] cursor-pointer"
+        >
+          관리자
+        </button>
 
       </footer>
 
