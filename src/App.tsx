@@ -13,6 +13,10 @@ import {
 } from "./components/MissionCard";
 
 import {
+  ParticipationChallenge
+} from "./components/ParticipationChallenge";
+
+import {
   DepartmentCombobox
 } from "./components/DepartmentCombobox";
 
@@ -46,7 +50,8 @@ import {
   fetchMissionSettingsApi,
   fetchDailySubmissionStatusApi,
   AdminDataResponse,
-  DailySubmissionStatus
+  DailySubmissionStatus,
+  ParticipationChallenge as ParticipationChallengeData
 } from "./utils/api";
 
 import {
@@ -63,7 +68,9 @@ import {
 
 
 /**
- * 브라우저별 식별값
+ * =====================================
+ * Device ID
+ * =====================================
  */
 function getOrCreateDeviceId(): string {
 
@@ -121,6 +128,11 @@ function getOrCreateDeviceId(): string {
 }
 
 
+/**
+ * =====================================
+ * App
+ * =====================================
+ */
 export default function App() {
 
   /**
@@ -222,8 +234,28 @@ export default function App() {
 
 
   /**
-   * 봉투 공개 여부
+   * =====================================
+   * 누적 참여 공동목표
+   * =====================================
    */
+
+  const [
+    participationChallenge,
+    setParticipationChallenge
+  ] =
+    useState<
+      ParticipationChallengeData | null
+    >(
+      null
+    );
+
+
+  /**
+   * =====================================
+   * 봉투 공개 여부
+   * =====================================
+   */
+
   const [
     isMissionRevealed,
     setIsMissionRevealed
@@ -288,6 +320,18 @@ export default function App() {
   const [
     name,
     setName
+  ] =
+    useState(
+      ""
+    );
+
+
+  /**
+   * 사번
+   */
+  const [
+    employeeId,
+    setEmployeeId
   ] =
     useState(
       ""
@@ -383,79 +427,98 @@ export default function App() {
             await fetchMissionSettingsApi();
 
 
-          if (
-            settings &&
-            Array.isArray(
-              settings.activeMissions
-            )
-          ) {
+          if (!settings) {
 
-            const week =
-              String(
-                settings.currentWeek ||
-                "1"
-              );
-
-
-            /**
-             * 한 주에 미션 1개만 사용
-             */
-            const active =
-              settings.activeMissions.length >
-              0
-                ? [
-                    settings.activeMissions[0]
-                  ]
-                : [];
-
-
-            setCurrentWeek(
-              week
+            setParticipationChallenge(
+              null
             );
 
 
-            setActiveMissions(
-              active
-            );
-
-
-            /**
-             * 관리자가 활성 미션을 바꾼 경우
-             * 기존에 열어둔 봉투/선택 상태 초기화
-             */
-            setSelectedMission(
-              (
-                previous
-              ) => {
-
-                if (
-                  previous &&
-                  !active.includes(
-                    previous.id
-                  )
-                ) {
-
-                  setIsMissionRevealed(
-                    false
-                  );
-
-
-                  setDescription(
-                    ""
-                  );
-
-
-                  return null;
-
-                }
-
-
-                return previous;
-
-              }
-            );
+            return;
 
           }
+
+
+          /**
+           * 누적 참여 공동목표
+           */
+          setParticipationChallenge(
+            settings
+              .participationChallenge ??
+            null
+          );
+
+
+          /**
+           * 현재 운영 주차
+           */
+          const week =
+            String(
+              settings.currentWeek ||
+              "1"
+            );
+
+
+          setCurrentWeek(
+            week
+          );
+
+
+          /**
+           * 주차별 미션은 하나만 사용
+           */
+          const active =
+            Array.isArray(
+              settings.activeMissions
+            ) &&
+            settings.activeMissions.length >
+              0
+              ? [
+                  settings.activeMissions[0]
+                ]
+              : [];
+
+
+          setActiveMissions(
+            active
+          );
+
+
+          /**
+           * 관리자가 미션을 변경한 경우
+           * 기존 선택상태 초기화
+           */
+          setSelectedMission(
+            (
+              previous
+            ) => {
+
+              if (
+                previous &&
+                !active.includes(
+                  previous.id
+                )
+              ) {
+
+                setIsMissionRevealed(
+                  false
+                );
+
+
+                setDescription(
+                  ""
+                );
+
+
+                return null;
+
+              }
+
+
+              return previous;
+
+            }
+          );
 
 
         } catch (
@@ -465,6 +528,11 @@ export default function App() {
           console.error(
             "Mission settings error:",
             error
+          );
+
+
+          setParticipationChallenge(
+            null
           );
 
 
@@ -670,7 +738,7 @@ export default function App() {
 
   /**
    * =====================================
-   * 자랑하GO M14 설명 필수
+   * M14 자랑하GO 설명 필수
    * =====================================
    */
 
@@ -685,6 +753,8 @@ export default function App() {
   /**
    * =====================================
    * Form valid
+   *
+   * 이름 + 사번 모두 필수
    * =====================================
    */
 
@@ -697,6 +767,9 @@ export default function App() {
     ) &&
     Boolean(
       name.trim()
+    ) &&
+    Boolean(
+      employeeId.trim()
     ) &&
     Boolean(
       imageData
@@ -784,6 +857,9 @@ export default function App() {
       event.preventDefault();
 
 
+      /**
+       * 오늘 참여 완료
+       */
       if (
         !dailyStatus.canSubmit
       ) {
@@ -798,6 +874,26 @@ export default function App() {
       }
 
 
+      /**
+       * 사번 필수
+       */
+      if (
+        !employeeId.trim()
+      ) {
+
+        setSubmitError(
+          "사번을 입력해주세요."
+        );
+
+
+        return;
+
+      }
+
+
+      /**
+       * M14 설명 필수
+       */
       if (
         selectedMission?.id ===
           "M14" &&
@@ -827,7 +923,7 @@ export default function App() {
 
 
       /**
-       * 프론트에서도 현재 미션 재검증
+       * 현재 OPEN 미션 재확인
        */
       if (
         selectedMission.id !==
@@ -857,7 +953,8 @@ export default function App() {
 
 
         /**
-         * 제출 직전 하루 참여 여부 재검증
+         * 제출 직전
+         * 하루 참여 여부 재확인
          */
         const latestStatus =
           await fetchDailySubmissionStatusApi(
@@ -882,7 +979,7 @@ export default function App() {
 
 
         /**
-         * 제출
+         * 실제 제출
          */
         const response =
           await submitMissionApi({
@@ -898,6 +995,9 @@ export default function App() {
 
             name:
               name.trim(),
+
+            employeeId:
+              employeeId.trim(),
 
             description:
               description.trim(),
@@ -918,6 +1018,9 @@ export default function App() {
             false
         ) {
 
+          /**
+           * 오늘 참여상태 갱신
+           */
           try {
 
             const newStatus =
@@ -950,6 +1053,40 @@ export default function App() {
               message:
                 "오늘 참여를 완료했습니다."
             });
+
+          }
+
+
+          /**
+           * 누적참여 숫자 갱신
+           */
+          try {
+
+            const latestSettings =
+              await fetchMissionSettingsApi();
+
+
+            if (
+              latestSettings
+                ?.participationChallenge
+            ) {
+
+              setParticipationChallenge(
+                latestSettings
+                  .participationChallenge
+              );
+
+            }
+
+
+          } catch (
+            challengeError
+          ) {
+
+            console.warn(
+              "Failed to refresh participation challenge:",
+              challengeError
+            );
 
           }
 
@@ -1030,7 +1167,7 @@ export default function App() {
 
   /**
    * =====================================
-   * 성공 → 처음
+   * 성공 → 처음으로
    * =====================================
    */
 
@@ -1048,6 +1185,14 @@ export default function App() {
 
 
       setName(
+        ""
+      );
+
+
+      /**
+       * 사번 초기화
+       */
+      setEmployeeId(
         ""
       );
 
@@ -1186,7 +1331,7 @@ export default function App() {
 
   /**
    * =====================================
-   * Admin login
+   * Admin Login
    * =====================================
    */
 
@@ -1196,7 +1341,17 @@ export default function App() {
   ) {
 
     return (
-      <div className="min-h-screen bg-[#F5F8FC] px-3 py-5 sm:px-4 sm:py-6 font-sans">
+      <div
+        className="
+          min-h-screen
+          bg-[#F5F8FC]
+          px-3
+          py-5
+          sm:px-4
+          sm:py-6
+          font-sans
+        "
+      >
 
         <AdminLogin
           onSuccess={(
@@ -1233,7 +1388,7 @@ export default function App() {
 
   /**
    * =====================================
-   * Admin dashboard
+   * Admin Dashboard
    * =====================================
    */
 
@@ -1244,7 +1399,17 @@ export default function App() {
   ) {
 
     return (
-      <div className="min-h-screen bg-[#F5F8FC] px-3 py-5 sm:px-4 sm:py-6 font-sans">
+      <div
+        className="
+          min-h-screen
+          bg-[#F5F8FC]
+          px-3
+          py-5
+          sm:px-4
+          sm:py-6
+          font-sans
+        "
+      >
 
         <AdminDashboard
           adminPassword={
@@ -1277,7 +1442,16 @@ export default function App() {
    */
 
   return (
-    <div className="min-h-screen bg-[#F5F8FC] text-[#172033] flex flex-col font-sans">
+    <div
+      className="
+        min-h-screen
+        bg-[#F5F8FC]
+        text-[#172033]
+        flex
+        flex-col
+        font-sans
+      "
+    >
 
       <main
         className="
@@ -1321,10 +1495,18 @@ export default function App() {
             onSubmit={
               handleSubmit
             }
-            className="space-y-4 sm:space-y-5 pb-24 sm:pb-28"
+
+            className="
+              space-y-4
+              sm:space-y-5
+              pb-24
+              sm:pb-28
+            "
           >
 
-            {/* Header */}
+            {/* =====================================
+                Header
+            ====================================== */}
             <Header
               onNavigateToAdmin={
                 navigateToAdmin
@@ -1333,32 +1515,86 @@ export default function App() {
 
 
             {/* =====================================
-                참여 상태
+                오늘 참여 상태
             ====================================== */}
             {!isLoadingDailyStatus && (
 
               <div
                 className={
                   dailyStatus.canSubmit
-                    ? "bg-white border border-[#D9E2EC] rounded-2xl px-3.5 sm:px-4 py-3 flex items-center justify-between gap-3"
-                    : "bg-emerald-50 border border-emerald-200 rounded-2xl px-3.5 sm:px-4 py-3 flex items-center gap-3"
+
+                    ? `
+                      bg-white
+                      border
+                      border-[#D9E2EC]
+                      rounded-2xl
+                      px-3.5
+                      sm:px-4
+                      py-3
+                      flex
+                      items-center
+                      justify-between
+                      gap-3
+                    `
+
+                    : `
+                      bg-emerald-50
+                      border
+                      border-emerald-200
+                      rounded-2xl
+                      px-3.5
+                      sm:px-4
+                      py-3
+                      flex
+                      items-center
+                      gap-3
+                    `
                 }
               >
 
-                <div className="flex items-center gap-2 min-w-0">
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    min-w-0
+                  "
+                >
 
                   {dailyStatus.canSubmit ? (
 
-                    <Clock3 className="w-4 h-4 text-[#2563EB] shrink-0" />
+                    <Clock3
+                      className="
+                        w-4
+                        h-4
+                        text-[#2563EB]
+                        shrink-0
+                      "
+                    />
 
                   ) : (
 
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <CheckCircle2
+                      className="
+                        w-4
+                        h-4
+                        text-emerald-600
+                        shrink-0
+                      "
+                    />
 
                   )}
 
 
-                  <span className="text-xs sm:text-sm font-semibold text-[#475569] truncate">
+                  <span
+                    className="
+                      text-xs
+                      sm:text-sm
+                      font-semibold
+                      text-[#475569]
+                      truncate
+                    "
+                  >
 
                     {dailyStatus.canSubmit
                       ? "오늘 1회 참여할 수 있어요."
@@ -1371,7 +1607,15 @@ export default function App() {
 
                 {dailyStatus.canSubmit && (
 
-                  <span className="text-[11px] sm:text-xs font-bold text-[#2563EB] whitespace-nowrap">
+                  <span
+                    className="
+                      text-[11px]
+                      sm:text-xs
+                      font-bold
+                      text-[#2563EB]
+                      whitespace-nowrap
+                    "
+                  >
                     1회 가능
                   </span>
 
@@ -1380,6 +1624,16 @@ export default function App() {
               </div>
 
             )}
+
+
+            {/* =====================================
+                공동 참여 목표
+            ====================================== */}
+            <ParticipationChallenge
+              challenge={
+                participationChallenge
+              }
+            />
 
 
             {/* =====================================
@@ -1405,7 +1659,6 @@ export default function App() {
               `}
             >
 
-              {/* Section Header */}
               <div
                 className="
                   flex
@@ -1419,7 +1672,14 @@ export default function App() {
                 "
               >
 
-                <div className="flex items-center gap-2 min-w-0">
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                    min-w-0
+                  "
+                >
 
                   <span
                     className="
@@ -1478,7 +1738,15 @@ export default function App() {
                   "
                 >
 
-                  <Calendar className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                  <Calendar
+                    className="
+                      w-3
+                      sm:w-3.5
+                      h-3
+                      sm:h-3.5
+                    "
+                  />
+
 
                   <span>
                     {currentWeek}주차
@@ -1489,8 +1757,14 @@ export default function App() {
               </div>
 
 
-              {/* 미션 영역 */}
-              <div className="w-full flex justify-center">
+              {/* 미션 카드 */}
+              <div
+                className="
+                  w-full
+                  flex
+                  justify-center
+                "
+              >
 
                 <div
                   className="
@@ -1531,10 +1805,24 @@ export default function App() {
                       "
                     >
 
-                      <AlertCircle className="w-6 h-6 text-slate-400 mx-auto mb-2" />
+                      <AlertCircle
+                        className="
+                          w-6
+                          h-6
+                          text-slate-400
+                          mx-auto
+                          mb-2
+                        "
+                      />
 
 
-                      <div className="text-sm font-bold text-slate-500">
+                      <div
+                        className="
+                          text-sm
+                          font-bold
+                          text-slate-500
+                        "
+                      >
                         현재 공개된 미션이 없습니다.
                       </div>
 
@@ -1630,12 +1918,28 @@ export default function App() {
 
                     <div className="min-w-0">
 
-                      <div className="text-xs font-extrabold text-[#1E3A5F]">
+                      <div
+                        className="
+                          text-xs
+                          font-extrabold
+                          text-[#1E3A5F]
+                        "
+                      >
                         수행 방법
                       </div>
 
 
-                      <p className="mt-1 text-xs sm:text-sm text-[#334155] leading-relaxed font-medium break-keep">
+                      <p
+                        className="
+                          mt-1
+                          text-xs
+                          sm:text-sm
+                          text-[#334155]
+                          leading-relaxed
+                          font-medium
+                          break-keep
+                        "
+                      >
                         {selectedMission.guide}
                       </p>
 
@@ -1681,12 +1985,28 @@ export default function App() {
 
                     <div className="min-w-0">
 
-                      <div className="text-xs font-extrabold text-[#1E3A5F]">
+                      <div
+                        className="
+                          text-xs
+                          font-extrabold
+                          text-[#1E3A5F]
+                        "
+                      >
                         인증 방법
                       </div>
 
 
-                      <p className="mt-1 text-xs sm:text-sm text-[#334155] leading-relaxed font-medium break-keep">
+                      <p
+                        className="
+                          mt-1
+                          text-xs
+                          sm:text-sm
+                          text-[#334155]
+                          leading-relaxed
+                          font-medium
+                          break-keep
+                        "
+                      >
                         {selectedMission.verificationGuide}
                       </p>
 
@@ -1695,7 +2015,7 @@ export default function App() {
                   </div>
 
 
-                  {/* 개인정보 */}
+                  {/* 개인정보 주의 */}
                   <div
                     className="
                       bg-amber-50
@@ -1709,14 +2029,30 @@ export default function App() {
                     "
                   >
 
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <AlertTriangle
+                      className="
+                        w-4
+                        h-4
+                        text-amber-600
+                        shrink-0
+                        mt-0.5
+                      "
+                    />
 
 
-                    <p className="text-[11px] sm:text-xs text-amber-900 leading-relaxed font-medium break-keep">
-
-                      인증사진에 환자 이름, 등록번호, 의무기록,
-                      비밀번호 등 개인정보가 보이지 않는지 반드시 확인해주세요.
-
+                    <p
+                      className="
+                        text-[11px]
+                        sm:text-xs
+                        text-amber-900
+                        leading-relaxed
+                        font-medium
+                        break-keep
+                      "
+                    >
+                      인증사진에 환자 이름, 등록번호,
+                      의무기록, 비밀번호 등 개인정보가
+                      보이지 않는지 반드시 확인해주세요.
                     </p>
 
                   </div>
@@ -1749,14 +2085,44 @@ export default function App() {
               `}
             >
 
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  border-b
+                  border-slate-100
+                  pb-3
+                "
+              >
 
-                <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white font-black text-xs flex items-center justify-center shrink-0">
+                <span
+                  className="
+                    w-6
+                    h-6
+                    rounded-full
+                    bg-[#2563EB]
+                    text-white
+                    font-black
+                    text-xs
+                    flex
+                    items-center
+                    justify-center
+                    shrink-0
+                  "
+                >
                   2
                 </span>
 
 
-                <h2 className="text-sm sm:text-base font-extrabold text-[#172033]">
+                <h2
+                  className="
+                    text-sm
+                    sm:text-base
+                    font-extrabold
+                    text-[#172033]
+                  "
+                >
 
                   부서 선택{" "}
 
@@ -1783,7 +2149,7 @@ export default function App() {
 
 
             {/* =====================================
-                참여자
+                참여자 정보
             ====================================== */}
             <section
               className={`
@@ -1803,14 +2169,44 @@ export default function App() {
               `}
             >
 
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  border-b
+                  border-slate-100
+                  pb-3
+                "
+              >
 
-                <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white font-black text-xs flex items-center justify-center shrink-0">
+                <span
+                  className="
+                    w-6
+                    h-6
+                    rounded-full
+                    bg-[#2563EB]
+                    text-white
+                    font-black
+                    text-xs
+                    flex
+                    items-center
+                    justify-center
+                    shrink-0
+                  "
+                >
                   3
                 </span>
 
 
-                <h2 className="text-sm sm:text-base font-extrabold text-[#172033]">
+                <h2
+                  className="
+                    text-sm
+                    sm:text-base
+                    font-extrabold
+                    text-[#172033]
+                  "
+                >
                   참여자 정보
                 </h2>
 
@@ -1826,6 +2222,14 @@ export default function App() {
                   setName
                 }
 
+                employeeId={
+                  employeeId
+                }
+
+                onChangeEmployeeId={
+                  setEmployeeId
+                }
+
                 description={
                   description
                 }
@@ -1834,7 +2238,7 @@ export default function App() {
                   setDescription
                 }
 
-                isMission05={
+                requiresDescription={
                   selectedMission?.id ===
                   "M14"
                 }
@@ -1864,14 +2268,44 @@ export default function App() {
               `}
             >
 
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  border-b
+                  border-slate-100
+                  pb-3
+                "
+              >
 
-                <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white font-black text-xs flex items-center justify-center shrink-0">
+                <span
+                  className="
+                    w-6
+                    h-6
+                    rounded-full
+                    bg-[#2563EB]
+                    text-white
+                    font-black
+                    text-xs
+                    flex
+                    items-center
+                    justify-center
+                    shrink-0
+                  "
+                >
                   4
                 </span>
 
 
-                <h2 className="text-sm sm:text-base font-extrabold text-[#172033]">
+                <h2
+                  className="
+                    text-sm
+                    sm:text-base
+                    font-extrabold
+                    text-[#172033]
+                  "
+                >
 
                   인증사진 촬영 및 등록{" "}
 
@@ -1897,7 +2331,9 @@ export default function App() {
             </section>
 
 
-            {/* Error */}
+            {/* =====================================
+                Error
+            ====================================== */}
             {submitError && (
 
               <div
@@ -1918,7 +2354,14 @@ export default function App() {
                 "
               >
 
-                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                <AlertCircle
+                  className="
+                    w-5
+                    h-5
+                    text-rose-600
+                    shrink-0
+                  "
+                />
 
 
                 <span className="leading-relaxed">
@@ -1931,7 +2374,7 @@ export default function App() {
 
 
             {/* =====================================
-                Sticky submit
+                Sticky Submit
             ====================================== */}
             <div
               className="
@@ -1952,7 +2395,13 @@ export default function App() {
               "
             >
 
-              <div className="w-full max-w-2xl mx-auto">
+              <div
+                className="
+                  w-full
+                  max-w-2xl
+                  mx-auto
+                "
+              >
 
                 <button
                   type="submit"
@@ -1992,7 +2441,13 @@ export default function App() {
                   {isSubmitting ? (
 
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2
+                        className="
+                          w-5
+                          h-5
+                          animate-spin
+                        "
+                      />
 
                       <span>
                         등록 중...
@@ -2054,7 +2509,9 @@ export default function App() {
       </main>
 
 
-      {/* Footer */}
+      {/* =====================================
+          Footer
+      ====================================== */}
       <footer
         className="
           w-full
@@ -2070,7 +2527,12 @@ export default function App() {
         "
       >
 
-        <div className="font-semibold text-[#172033]">
+        <div
+          className="
+            font-semibold
+            text-[#172033]
+          "
+        >
           2026 정보보호 미션 챌린지
         </div>
 
@@ -2082,7 +2544,14 @@ export default function App() {
             navigateToAdmin
           }
 
-          className="mt-1 text-[11px] underline underline-offset-2 hover:text-[#2563EB] cursor-pointer"
+          className="
+            mt-1
+            text-[11px]
+            underline
+            underline-offset-2
+            hover:text-[#2563EB]
+            cursor-pointer
+          "
         >
           관리자
         </button>
